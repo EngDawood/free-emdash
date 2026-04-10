@@ -1,0 +1,39 @@
+diff --git a/dist/connection-B4zVnQIa.mjs b/dist/connection-B4zVnQIa.mjs
+index ade9bbb3d89555ee2c21bcaf23d8764e3792e46a..214aeff8cad1557b5125efe8577833831e5666e7 100644
+--- a/dist/connection-B4zVnQIa.mjs
++++ b/dist/connection-B4zVnQIa.mjs
+@@ -1,5 +1,5 @@
+-import BetterSqlite3 from "better-sqlite3";
+-import { Kysely, SqliteDialect } from "kysely";
++import { LibsqlDialect } from "@libsql/kysely-libsql";
++import { Kysely } from "kysely";
+ 
+ //#region src/database/connection.ts
+ var EmDashDatabaseError = class extends Error {
+@@ -12,21 +12,19 @@ var EmDashDatabaseError = class extends Error {
+ /**
+ * Creates a Kysely database instance
+ * Supports:
+-* - file:./path/to/db.sqlite (local SQLite)
++* - file:./path/to/db.sqlite (local SQLite via libsql)
+ * - :memory: (in-memory SQLite for testing)
+-* - libsql://... (Turso/libSQL with auth token) - TODO
++* - libsql://... (Turso/libSQL with auth token)
+ */
+ function createDatabase(config) {
+ 	try {
+ 		if (config.url.startsWith("file:") || config.url === ":memory:") {
+-			const sqlite = new BetterSqlite3(config.url === ":memory:" ? ":memory:" : config.url.replace("file:", ""));
+-			sqlite.pragma("journal_mode = WAL");
+-			sqlite.pragma("foreign_keys = ON");
+-			return new Kysely({ dialect: new SqliteDialect({ database: sqlite }) });
++			const url = config.url === ":memory:" ? ":memory:" : config.url;
++			return new Kysely({ dialect: new LibsqlDialect({ url }) });
+ 		}
+ 		if (config.url.startsWith("libsql:")) {
+ 			if (!config.authToken) throw new EmDashDatabaseError("Auth token required for remote libSQL database");
+-			throw new EmDashDatabaseError("LibSQL not yet implemented");
++			return new Kysely({ dialect: new LibsqlDialect({ url: config.url, authToken: config.authToken }) });
+ 		}
+ 		throw new EmDashDatabaseError(`Unsupported database URL scheme: ${config.url}`);
+ 	} catch (error) {
