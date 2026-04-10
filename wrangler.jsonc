@@ -1,0 +1,48 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "portfolio",
+	"main": "./src/worker.ts",
+	"compatibility_date": "2026-03-29",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "my-emdash-site",
+			"database_id": "b578b3b5-25b4-4cbe-8dab-f0196a3d33f4",
+			// Run `wrangler d1 create my-emdash-site` and paste the ID here
+		},
+	],
+	"routes": [
+		{
+			"pattern": "wp.engdawood.com",
+			"custom_domain": true
+		},
+		{
+			"pattern": "www.wp.engdawood.com",
+			"custom_domain": true
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "MEDIA",
+			"bucket_name": "my-emdash-media",
+			"preview_bucket_name": "my-emdash-media",
+		},
+	],
+	"observability": {
+		"enabled": true,
+	},
+	"kv_namespaces": [
+		{
+			"binding": "SESSION",
+			"id": "1670a159f70a440c8e7982743d867dfa"
+		}
+	],
+	"worker_loaders": [
+		{
+			"binding": "LOADER",
+		},
+	],
+}
