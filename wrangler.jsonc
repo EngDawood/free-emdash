@@ -53,6 +53,14 @@
 			"binding": "SESSION",
 			"id": "1670a159f70a440c8e7982743d867dfa"
 		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{ "name": "MCP_OBJECT", "class_name": "EmDashMCP" }
+		]
+	},
+	"migrations": [
+		{ "tag": "v1", "new_sqlite_classes": ["EmDashMCP"] }
 	]
 	/*
 	,
