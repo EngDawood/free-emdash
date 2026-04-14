@@ -1,0 +1,135 @@
+---
+import type { Locale } from "../../i18n/utils";
+import { t } from "../../i18n/utils";
+
+interface Props {
+	locale: Locale;
+	email: string;
+}
+
+const { locale, email } = Astro.props;
+---
+
+<section id="about" class="about reveal">
+	<div class="about-grid">
+		<div class="about-info reveal-child">
+			<h2 class="section-label">{t("about.section", locale)}</h2>
+			<h3 class="about-heading">
+				{t("about.heading1", locale)}
+				<span class="accent">{t("about.heading2", locale)}</span>
+			</h3>
+			<dl class="info-list">
+				<div class="info-row">
+					<dt>{t("about.info.location", locale)}</dt>
+					<dd>{t("about.info.locationVal", locale)}</dd>
+				</div>
+				<div class="info-row">
+					<dt>{t("about.info.focus", locale)}</dt>
+					<dd>{t("about.info.focusVal", locale)}</dd>
+				</div>
+				<div class="info-row">
+					<dt>{t("about.info.email", locale)}</dt>
+					<dd><a href={`mailto:${email}`}>{email}</a></dd>
+				</div>
+				<div class="info-row">
+					<dt>{t("about.info.status", locale)}</dt>
+					<dd class="status-available">{t("about.info.statusVal", locale)}</dd>
+				</div>
+			</dl>
+		</div>
+		<div class="about-bio">
+			<p>{t("about.bio1", locale)}</p>
+			<p>{t("about.bio2", locale)}</p>
+			<p>{t("about.bio3", locale)}</p>
+		</div>
+	</div>
+</section>
+
+<style>
+	.about {
+		padding: var(--spacing-4xl) var(--spacing-lg);
+		max-width: var(--wide-width);
+		margin: 0 auto;
+	}
+
+	.about-grid {
+		display: grid;
+		grid-template-columns: 1fr 1.5fr;
+		gap: var(--spacing-4xl);
+	}
+
+	.section-label {
+		font-size: var(--font-size-sm);
+		font-weight: 500;
+		color: var(--color-accent);
+		text-transform: uppercase;
+		letter-spacing: var(--tracking-wider);
+		margin-bottom: var(--spacing-sm);
+	}
+
+	.about-heading {
+		font-family: var(--font-serif);
+		font-size: var(--font-size-2xl);
+		font-weight: 500;
+		line-height: 1.2;
+		margin-bottom: var(--spacing-xl);
+	}
+
+	.accent {
+		color: var(--color-accent);
+	}
+
+	.info-list {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.info-row {
+		display: flex;
+		justify-content: space-between;
+		padding: var(--spacing-md) 0;
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.info-row dt {
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
+	}
+
+	.info-row dd {
+		font-size: var(--font-size-sm);
+		font-weight: 500;
+	}
+
+	.info-row dd a {
+		text-decoration: none;
+		color: var(--color-text);
+	}
+
+	.info-row dd a:hover {
+		color: var(--color-accent);
+	}
+
+	.status-available {
+		color: #22c55e;
+	}
+
+	.about-bio p {
+		font-size: var(--font-size-base);
+		color: var(--color-muted);
+		line-height: 1.7;
+		margin-bottom: var(--spacing-lg);
+	}
+
+	@media (max-width: 768px) {
+		.about-grid {
+			grid-template-columns: 1fr;
+			gap: var(--spacing-2xl);
+		}
+
+		.info-row {
+			flex-direction: column;
+			gap: 0.25rem;
+		}
+	}
+</style>

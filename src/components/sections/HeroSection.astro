@@ -1,0 +1,172 @@
+---
+import type { Locale } from "../../i18n/utils";
+import { t } from "../../i18n/utils";
+
+interface Props {
+	locale: Locale;
+	email: string;
+	github: string;
+	linkedin: string;
+	telegram: string;
+}
+
+const { locale, email, github, linkedin, telegram } = Astro.props;
+---
+
+<section id="hero" class="hero reveal">
+	<div class="hero-badge reveal-child">
+		<span class="badge-dot"></span>
+		{t("hero.available", locale)}
+	</div>
+	<h1 class="hero-name reveal-child">
+		<span class="first-name">{t("hero.firstName", locale)}</span>
+		<span class="last-name">{t("hero.lastName", locale)}</span>
+	</h1>
+	<p class="hero-subtitle reveal-child">{t("hero.subtitle", locale)}</p>
+	<p class="hero-stack reveal-child">{t("hero.stack", locale)}</p>
+	<div class="hero-cta reveal-child">
+		<a href={`mailto:${email}`} class="btn btn-primary">
+			{t("hero.cta", locale)}
+		</a>
+		<a href="#projects" class="btn btn-secondary">
+			{t("hero.viewProjects", locale)}
+		</a>
+	</div>
+	<div class="hero-social">
+		<a href={github} target="_blank" rel="noopener noreferrer">GitHub</a>
+		<a href={linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+		<a href={telegram} target="_blank" rel="noopener noreferrer">Telegram</a>
+	</div>
+</section>
+
+<style>
+	.hero {
+		min-height: 90vh;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		text-align: center;
+		padding: var(--spacing-2xl) var(--spacing-lg);
+		max-width: var(--wide-width);
+		margin: 0 auto;
+	}
+
+	.hero-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.375rem 0.875rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 9999px;
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
+		margin-bottom: var(--spacing-lg);
+	}
+
+	.badge-dot {
+		width: 8px;
+		height: 8px;
+		background: #22c55e;
+		border-radius: 50%;
+		animation: pulse 2s infinite;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.5; }
+	}
+
+	.hero-name {
+		font-family: var(--font-serif);
+		font-size: clamp(3rem, 10vw, var(--font-size-5xl));
+		font-weight: 500;
+		line-height: 1.1;
+		letter-spacing: var(--tracking-tight);
+		margin-bottom: var(--spacing-lg);
+	}
+
+	.last-name {
+		color: var(--color-accent);
+	}
+
+	.hero-subtitle {
+		font-size: var(--font-size-lg);
+		color: var(--color-muted);
+		max-width: 600px;
+		line-height: 1.6;
+		margin-bottom: var(--spacing-md);
+	}
+
+	.hero-stack {
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
+		font-family: var(--font-mono);
+		margin-bottom: var(--spacing-xl);
+	}
+
+	.hero-cta {
+		display: flex;
+		gap: var(--spacing-md);
+		margin-bottom: var(--spacing-xl);
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1.5rem;
+		font-size: var(--font-size-sm);
+		font-weight: 500;
+		border-radius: var(--radius);
+		text-decoration: none;
+		transition: all var(--transition-fast);
+		cursor: pointer;
+		border: none;
+	}
+
+	.btn-primary {
+		background: var(--color-text);
+		color: var(--color-bg);
+	}
+
+	.btn-primary:hover {
+		background: var(--color-accent);
+	}
+
+	.btn-secondary {
+		background: var(--color-surface);
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+	}
+
+	.btn-secondary:hover {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+
+	.hero-social {
+		display: flex;
+		gap: var(--spacing-lg);
+	}
+
+	.hero-social a {
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
+		text-decoration: none;
+		transition: color var(--transition-fast);
+	}
+
+	.hero-social a:hover {
+		color: var(--color-accent);
+	}
+
+	@media (max-width: 768px) {
+		.hero-name {
+			font-size: var(--font-size-3xl);
+		}
+	}
+</style>
