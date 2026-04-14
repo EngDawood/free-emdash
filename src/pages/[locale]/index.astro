@@ -2,6 +2,7 @@
 import { getEmDashCollection } from "emdash";
 import Base from "../../layouts/Base.astro";
 import { t, locales, type Locale, defaultLocale } from "../../i18n/utils";
+import { contact } from "../../data/contact";
 import HeroSection from "../../components/sections/HeroSection.astro";
 import AboutSection from "../../components/sections/AboutSection.astro";
 import ProjectsSection from "../../components/sections/ProjectsSection.astro";
@@ -27,14 +28,6 @@ const featuredProjects = projects
 		return dateB - dateA;
 	})
 	.slice(0, 3);
-
-const contact = {
-	email: "eng.dawoodsaleh@gmail.com",
-	github: "https://github.com/EngDawood",
-	linkedin: "https://www.linkedin.com/in/dawood3",
-	telegram: "https://t.me/Daw5d",
-	twitter: "https://x.com/dawo5d",
-};
 
 let formStatus: "idle" | "success" | "error" = "idle";
 let formMessage = "";
