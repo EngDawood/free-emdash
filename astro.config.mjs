@@ -1,14 +1,14 @@
-import node from "@astrojs/node";
+import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
+import { d1, r2, sandbox } from "@emdash-cms/cloudflare";
+import { formsPlugin } from "@emdash-cms/plugin-forms";
+import { webhookNotifierPlugin } from "@emdash-cms/plugin-webhook-notifier";
 import { defineConfig } from "astro/config";
-import emdash, { local } from "emdash/astro";
-import { libsql } from "emdash/db";
+import emdash from "emdash/astro";
 
 export default defineConfig({
 	output: "server",
-	adapter: node({
-		mode: "standalone",
-	}),
+	adapter: cloudflare(),
 	image: {
 		layout: "constrained",
 		responsiveStyles: true,
@@ -16,11 +16,12 @@ export default defineConfig({
 	integrations: [
 		react(),
 		emdash({
-			database: libsql({ url: "file:./data.db" }),
-			storage: local({
-				directory: "./uploads",
-				baseUrl: "/_emdash/api/media/file",
-			}),
+			database: d1({ binding: "DB", session: "auto" }),
+			storage: r2({ binding: "MEDIA" }),
+			plugins: [formsPlugin()],
+			sandboxed: [webhookNotifierPlugin()],
+			sandboxRunner: sandbox(),
+			marketplace: "https://marketplace.emdashcms.com",
 		}),
 	],
 	devToolbar: { enabled: false },
