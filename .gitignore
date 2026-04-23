@@ -40,3 +40,5 @@ CLAUDE-tracker.md
 CLAUDE.CLOUDFLARE.md
 CLAUDE.EMDASH.md
 GEMINI.md
+tracker_data_only.sql
+tracker_dump.sql
