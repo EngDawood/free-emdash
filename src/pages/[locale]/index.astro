@@ -52,8 +52,21 @@ if (Astro.request.method === "POST") {
 			formStatus = "error";
 			formMessage = t("contact.form.error", locale);
 		} else {
-			// TODO: Wire to formsPlugin or email service
-			console.log("Contact form submission:", { name, email: emailVal, message });
+			const resendKey = import.meta.env.RESEND_API_KEY;
+			const res = await fetch("https://api.resend.com/emails", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${resendKey}`,
+				},
+				body: JSON.stringify({
+					from: "noreply@engdawood.com",
+					to: ["eng.dawoodsaleh@gmail.com"],
+					subject: `[Portfolio] New message from ${name}`,
+					text: `From: ${name} <${emailVal}>\n\n${message}`,
+				}),
+			});
+			if (!res.ok) throw new Error(`Resend responded with ${res.status}`);
 			formStatus = "success";
 			formMessage = t("contact.form.success", locale);
 		}

@@ -2,7 +2,7 @@
  * EmDash MCP Agent (Cloudflare Workers)
  *
  * Remote MCP server deployed at /mcp on the existing EmDash worker.
- * Exposes the same tools as mcp/server.ts but over HTTP (SSE) instead of stdio.
+ * Exposes EmDash content management as MCP tools over HTTP (SSE).
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -10,18 +10,26 @@ import { McpAgent } from "agents/mcp";
 import { EmDashClient } from "emdash/client";
 import { z } from "zod";
 
+const jsonText = (data: unknown) => ({
+	content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+});
+
 interface Env extends Cloudflare.Env {
 	MCP_OBJECT: DurableObjectNamespace;
 	EMDASH_URL?: string;
 	EMDASH_TOKEN?: string;
+	TRACKER_DB: D1Database;
+	MEDIA: R2Bucket;
 }
 
 export class EmDashMCP extends McpAgent<Env> {
 	server = new McpServer({ name: "emdash", version: "1.0.0" });
 
 	async init() {
-		const baseUrl = this.env.EMDASH_URL ?? "https://wp.engdawood.com";
+		const baseUrl = this.env.EMDASH_URL ?? "https://engdawood.com";
 		const client = new EmDashClient({ baseUrl, token: this.env.EMDASH_TOKEN });
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const req = (method: string, path: string, body?: unknown): Promise<unknown> => (client as any).request(method, path, body);
 
 		// -----------------------------------------------------------------------
 		// Collections
@@ -33,7 +41,7 @@ export class EmDashMCP extends McpAgent<Env> {
 			{},
 			async () => {
 				const collections = await client.collections();
-				return { content: [{ type: "text", text: JSON.stringify(collections, null, 2) }] };
+				return jsonText(collections);
 			},
 		);
 
@@ -54,20 +62,20 @@ export class EmDashMCP extends McpAgent<Env> {
 					status: status === "all" ? undefined : status,
 					limit,
 				});
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				return jsonText(result);
 			},
 		);
 
 		this.server.tool(
 			"get_content",
-			"Get a single content entry by ID",
+			"Get a single content entry by ID or slug",
 			{
 				collection: z.string().describe("Collection slug: projects, posts, or pages"),
 				id: z.string().describe("Entry ID (ULID) or slug"),
 			},
 			async ({ collection, id }) => {
 				const item = await client.get(collection, id);
-				return { content: [{ type: "text", text: JSON.stringify(item, null, 2) }] };
+				return jsonText(item);
 			},
 		);
 
@@ -88,7 +96,7 @@ export class EmDashMCP extends McpAgent<Env> {
 					slug,
 					status: draft ? "draft" : "published",
 				});
-				return { content: [{ type: "text", text: JSON.stringify(item, null, 2) }] };
+				return jsonText(item);
 			},
 		);
 
@@ -108,13 +116,13 @@ export class EmDashMCP extends McpAgent<Env> {
 					_rev: rev,
 					status: draft ? "draft" : "published",
 				});
-				return { content: [{ type: "text", text: JSON.stringify(item, null, 2) }] };
+				return jsonText(item);
 			},
 		);
 
 		this.server.tool(
 			"delete_content",
-			"Soft-delete a content entry",
+			"Move a content entry to trash (sets deleted_at — reversible from the admin panel)",
 			{
 				collection: z.string().describe("Collection slug: projects, posts, or pages"),
 				id: z.string().describe("Entry ID"),
@@ -152,7 +160,7 @@ export class EmDashMCP extends McpAgent<Env> {
 			},
 			async ({ query, collection, limit }) => {
 				const results = await client.search(query, { collection, limit: limit ?? 10 });
-				return { content: [{ type: "text", text: JSON.stringify(results, null, 2) }] };
+				return jsonText(results);
 			},
 		);
 
@@ -169,7 +177,7 @@ export class EmDashMCP extends McpAgent<Env> {
 			},
 			async ({ limit, mimeType }) => {
 				const result = await client.mediaList({ limit, mimeType });
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				return jsonText(result);
 			},
 		);
 
@@ -190,7 +198,25 @@ export class EmDashMCP extends McpAgent<Env> {
 				const blob = await response.blob();
 				const name = filename ?? url.split("/").pop()?.split("?")[0] ?? "upload";
 				const item = await client.mediaUpload(blob, name, { alt, caption });
-				return { content: [{ type: "text", text: JSON.stringify(item, null, 2) }] };
+				return jsonText(item);
+			},
+		);
+
+		this.server.tool(
+			"upload_media_from_base64",
+			"Upload a file directly from base64-encoded data to the media library. Returns the media item including its ID.",
+			{
+				base64: z.string().describe("Base64-encoded file content"),
+				filename: z.string().describe("Filename including extension, e.g. photo.jpg"),
+				mimeType: z.string().optional().describe("MIME type, e.g. image/jpeg. Inferred from filename if omitted."),
+				alt: z.string().optional().describe("Alt text for accessibility"),
+				caption: z.string().optional().describe("Optional caption"),
+			},
+			async ({ base64, filename, mimeType, alt, caption }) => {
+				const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+				const blob = new Blob([binary], { type: mimeType });
+				const item = await client.mediaUpload(blob, filename, { alt, caption, contentType: mimeType });
+				return jsonText(item);
 			},
 		);
 
@@ -206,7 +232,7 @@ export class EmDashMCP extends McpAgent<Env> {
 			},
 			async ({ taxonomy }) => {
 				const result = await client.terms(taxonomy);
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				return jsonText(result);
 			},
 		);
 
@@ -219,12 +245,8 @@ export class EmDashMCP extends McpAgent<Env> {
 				taxonomy: z.string().describe("Taxonomy name: category or tag"),
 			},
 			async ({ collection, id, taxonomy }) => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (client as any).request(
-					"GET",
-					`/content/${encodeURIComponent(collection)}/${encodeURIComponent(id)}/terms/${encodeURIComponent(taxonomy)}`,
-				);
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				const result = await req("GET", `/content/${encodeURIComponent(collection)}/${encodeURIComponent(id)}/terms/${encodeURIComponent(taxonomy)}`);
+				return jsonText(result);
 			},
 		);
 
@@ -238,13 +260,8 @@ export class EmDashMCP extends McpAgent<Env> {
 				termIds: z.array(z.string()).describe("Array of term IDs to assign. Use list_taxonomy_terms to get IDs."),
 			},
 			async ({ collection, id, taxonomy, termIds }) => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (client as any).request(
-					"POST",
-					`/content/${encodeURIComponent(collection)}/${encodeURIComponent(id)}/terms/${encodeURIComponent(taxonomy)}`,
-					{ termIds },
-				);
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				const result = await req("POST", `/content/${encodeURIComponent(collection)}/${encodeURIComponent(id)}/terms/${encodeURIComponent(taxonomy)}`, { termIds });
+				return jsonText(result);
 			},
 		);
 
@@ -264,9 +281,8 @@ export class EmDashMCP extends McpAgent<Env> {
 				if (search) params.set("search", search);
 				if (limit) params.set("limit", String(limit));
 				const qs = params.toString();
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (client as any).request("GET", `/admin/bylines${qs ? `?${qs}` : ""}`);
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				const result = await req("GET", `/admin/bylines${qs ? `?${qs}` : ""}`);
+				return jsonText(result);
 			},
 		);
 
@@ -284,14 +300,8 @@ export class EmDashMCP extends McpAgent<Env> {
 				).describe("Ordered list of byline credits"),
 			},
 			async ({ collection, id, bylines }) => {
-				// The update endpoint accepts bylines directly
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (client as any).request(
-					"PUT",
-					`/content/${encodeURIComponent(collection)}/${encodeURIComponent(id)}`,
-					{ bylines },
-				);
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				const result = await req("PUT", `/content/${encodeURIComponent(collection)}/${encodeURIComponent(id)}`, { bylines });
+				return jsonText(result);
 			},
 		);
 
@@ -311,9 +321,8 @@ export class EmDashMCP extends McpAgent<Env> {
 				if (limit) params.set("limit", String(limit));
 				if (search) params.set("search", search);
 				const qs = params.toString();
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (client as any).request("GET", `/sections${qs ? `?${qs}` : ""}`);
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				const result = await req("GET", `/sections${qs ? `?${qs}` : ""}`);
+				return jsonText(result);
 			},
 		);
 
@@ -326,9 +335,8 @@ export class EmDashMCP extends McpAgent<Env> {
 			"Get site-wide settings (title, tagline, logo, favicon, etc.)",
 			{},
 			async () => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (client as any).request("GET", "/settings");
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				const result = await req("GET", "/settings");
+				return jsonText(result);
 			},
 		);
 
@@ -339,9 +347,8 @@ export class EmDashMCP extends McpAgent<Env> {
 				name: z.string().describe("Menu name, e.g. 'primary'"),
 			},
 			async ({ name }) => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (client as any).request("GET", `/menus/${encodeURIComponent(name)}`);
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				const result = await req("GET", `/menus/${encodeURIComponent(name)}`);
+				return jsonText(result);
 			},
 		);
 
@@ -353,12 +360,239 @@ export class EmDashMCP extends McpAgent<Env> {
 				slug: z.string().describe("Term slug"),
 			},
 			async ({ taxonomy, slug }) => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const result = await (client as any).request(
-					"GET",
-					`/taxonomies/${encodeURIComponent(taxonomy)}/terms/${encodeURIComponent(slug)}`,
-				);
-				return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+				const result = await req("GET", `/taxonomies/${encodeURIComponent(taxonomy)}/terms/${encodeURIComponent(slug)}`);
+				return jsonText(result);
+			},
+		);
+
+		// -----------------------------------------------------------------------
+		// Tracker
+		// -----------------------------------------------------------------------
+
+		this.server.tool(
+			"tracker_list_tasks",
+			"List tracker tasks. Optionally filter by status, priority, or payment. Ordered by deadline (soonest first).",
+			{
+				status: z.enum(["new", "progress", "done", "cancel"]).optional().describe("Filter by status"),
+				priority: z.enum(["hi", "med", "lo"]).optional().describe("Filter by priority"),
+				payment: z.enum(["paid", "half", "unpaid"]).optional().describe("Filter by payment status"),
+				limit: z.number().int().min(1).max(500).optional().describe("Max tasks to return (default: all)"),
+			},
+			async ({ status, priority, payment, limit }) => {
+				const conditions: string[] = [];
+				const params: unknown[] = [];
+				if (status) { conditions.push("status = ?"); params.push(status); }
+				if (priority) { conditions.push("priority = ?"); params.push(priority); }
+				if (payment) { conditions.push("payment = ?"); params.push(payment); }
+				const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+				const limitClause = limit ? `LIMIT ${limit}` : "";
+				const sql = `SELECT * FROM tasks ${where} ORDER BY deadline ASC NULLS LAST, id DESC ${limitClause}`.trim();
+				const stmt = this.env.TRACKER_DB.prepare(sql);
+				const { results } = params.length ? await stmt.bind(...params).all() : await stmt.all();
+				return jsonText(results);
+			},
+		);
+
+		this.server.tool(
+			"tracker_get_task",
+			"Get a single tracker task by its numeric ID",
+			{
+				id: z.number().int().describe("Task ID"),
+			},
+			async ({ id }) => {
+				const row = await this.env.TRACKER_DB.prepare("SELECT * FROM tasks WHERE id = ?").bind(id).first();
+				if (!row) throw new Error(`Task ${id} not found`);
+				return jsonText(row);
+			},
+		);
+
+		this.server.tool(
+			"tracker_create_task",
+			"Create a new tracker task. Returns the new task ID.",
+			{
+				client: z.string().describe("Client name"),
+				title_en: z.string().describe("Task title in English"),
+				title_ar: z.string().optional().describe("Task title in Arabic"),
+				university: z.string().optional().describe("University name"),
+				course: z.string().optional().describe("Course name"),
+				type: z.string().optional().describe("Task type, e.g. Assignment, Project, Exam"),
+				deadline: z.string().optional().describe("Deadline date in YYYY-MM-DD format"),
+				priority: z.enum(["hi", "med", "lo"]).optional().describe("Priority (default: med)"),
+				status: z.enum(["new", "progress", "done", "cancel"]).optional().describe("Status (default: new)"),
+				price: z.number().optional().describe("Price amount"),
+				payment: z.enum(["paid", "half", "unpaid"]).optional().describe("Payment status (default: unpaid)"),
+				claude: z.string().optional().describe("Claude account tier: Pro, Max, API, Team"),
+				fatora: z.string().optional().describe("Fatora invoice status"),
+				fatora_link: z.string().optional().describe("Fatora invoice URL"),
+				notes: z.string().optional().describe("Internal notes"),
+				instructions: z.string().optional().describe("Task instructions"),
+			},
+			async (f) => {
+				const now = new Date().toISOString();
+				const { meta } = await this.env.TRACKER_DB.prepare(
+					`INSERT INTO tasks (client, university, course, task, title_ar, type, deadline, priority, status, price, payment, claude_account, fatora_status, fatora_link, notes, instructions, log, created_at, updated_at)
+					 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?)`,
+				).bind(
+					f.client, f.university ?? null, f.course ?? null, f.title_en,
+					f.title_ar ?? null, f.type ?? "Assignment", f.deadline ?? null,
+					f.priority ?? "med", f.status ?? "new", f.price ?? null,
+					f.payment ?? "unpaid", f.claude ?? null, f.fatora ?? null,
+					f.fatora_link ?? null, f.notes ?? null, f.instructions ?? null,
+					now, now,
+				).run();
+				return jsonText({ id: meta.last_row_id });
+			},
+		);
+
+		this.server.tool(
+			"tracker_update_task",
+			"Update fields on an existing tracker task. Only provide fields you want to change.",
+			{
+				id: z.number().int().describe("Task ID"),
+				client: z.string().optional(),
+				university: z.string().optional(),
+				course: z.string().optional(),
+				title_en: z.string().optional().describe("Task title in English"),
+				title_ar: z.string().optional().describe("Task title in Arabic"),
+				type: z.string().optional(),
+				deadline: z.string().optional().describe("YYYY-MM-DD"),
+				priority: z.enum(["hi", "med", "lo"]).optional(),
+				status: z.enum(["new", "progress", "done", "cancel"]).optional(),
+				price: z.number().optional(),
+				payment: z.enum(["paid", "half", "unpaid"]).optional(),
+				claude: z.string().optional().describe("Claude account tier"),
+				fatora: z.string().optional().describe("Fatora invoice status"),
+				fatora_link: z.string().optional(),
+				notes: z.string().optional(),
+				instructions: z.string().optional(),
+				log: z.array(z.object({ when: z.string(), who: z.string(), what: z.string() })).optional().describe("Full activity log array (replaces existing)"),
+			},
+			async ({ id, client, university, course, title_en, title_ar, type, deadline, priority, status, price, payment, claude, fatora, fatora_link, notes, instructions, log }) => {
+				const setClauses: string[] = [];
+				const params: unknown[] = [];
+				const add = (col: string, val: unknown) => {
+					if (val !== undefined) { setClauses.push(`${col} = ?`); params.push(val); }
+				};
+				add("client", client);
+				add("university", university);
+				add("course", course);
+				add("task", title_en);
+				add("title_ar", title_ar);
+				add("type", type);
+				add("deadline", deadline);
+				add("priority", priority);
+				add("status", status);
+				add("price", price);
+				add("payment", payment);
+				add("claude_account", claude);
+				add("fatora_status", fatora);
+				add("fatora_link", fatora_link);
+				add("notes", notes);
+				add("instructions", instructions);
+				if (log !== undefined) { setClauses.push("log = ?"); params.push(JSON.stringify(log)); }
+				if (setClauses.length === 0) throw new Error("No fields to update");
+				setClauses.push("updated_at = datetime('now')");
+				params.push(id);
+				await this.env.TRACKER_DB.prepare(
+					`UPDATE tasks SET ${setClauses.join(", ")} WHERE id = ?`,
+				).bind(...params).run();
+				return { content: [{ type: "text" as const, text: `Updated task ${id}` }] };
+			},
+		);
+
+		this.server.tool(
+			"tracker_delete_task",
+			"Permanently delete a tracker task by ID",
+			{
+				id: z.number().int().describe("Task ID"),
+			},
+			async ({ id }) => {
+				await this.env.TRACKER_DB.prepare("DELETE FROM tasks WHERE id = ?").bind(id).run();
+				return { content: [{ type: "text" as const, text: `Deleted task ${id}` }] };
+			},
+		);
+
+		this.server.tool(
+			"tracker_list_universities",
+			"List all universities in the tracker reference table",
+			{},
+			async () => {
+				const { results } = await this.env.TRACKER_DB.prepare("SELECT * FROM universities ORDER BY name ASC").all();
+				return jsonText(results);
+			},
+		);
+
+		// -----------------------------------------------------------------------
+		// Tracker — Files
+		// -----------------------------------------------------------------------
+
+		this.server.tool(
+			"tracker_list_task_files",
+			"List files attached to a tracker task. Returns keys, sizes, and download URLs.",
+			{
+				taskId: z.number().int().describe("Task ID"),
+			},
+			async ({ taskId }) => {
+				const list = await this.env.MEDIA.list({ prefix: `tracker/${taskId}/` });
+				const files = list.objects.map((obj) => ({
+					key: obj.key,
+					name: obj.key.split("/").pop(),
+					size: obj.size,
+					uploaded: obj.uploaded,
+					url: `${baseUrl}/api/tracker/file/${obj.key}`,
+				}));
+				return jsonText(files);
+			},
+		);
+
+		this.server.tool(
+			"tracker_upload_file",
+			"Upload a file attachment to a tracker task from base64-encoded content. Returns the file key and download URL.",
+			{
+				taskId: z.number().int().describe("Task ID to attach the file to"),
+				base64: z.string().describe("Base64-encoded file content"),
+				filename: z.string().describe("Filename including extension, e.g. brief.pdf"),
+				mimeType: z.string().optional().describe("MIME type, e.g. application/pdf"),
+			},
+			async ({ taskId, base64, filename, mimeType }) => {
+				const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+				const key = `tracker/${taskId}/${Date.now()}-${filename}`;
+				await this.env.MEDIA.put(key, binary, {
+					httpMetadata: { contentType: mimeType ?? "application/octet-stream" },
+				});
+				return jsonText({ key, url: `${baseUrl}/api/tracker/file/${key}`, name: filename, size: binary.byteLength });
+			},
+		);
+
+		this.server.tool(
+			"tracker_upload_file_from_url",
+			"Fetch a file from a URL and attach it to a tracker task. Returns the file key and download URL.",
+			{
+				taskId: z.number().int().describe("Task ID to attach the file to"),
+				url: z.string().url().describe("Public URL of the file to fetch"),
+				filename: z.string().optional().describe("Override filename (default: derived from URL)"),
+			},
+			async ({ taskId, url: fileUrl, filename }) => {
+				const response = await fetch(fileUrl);
+				if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}: HTTP ${response.status}`);
+				const buffer = await response.arrayBuffer();
+				const name = filename ?? fileUrl.split("/").pop()?.split("?")[0] ?? "file";
+				const mimeType = response.headers.get("content-type") ?? "application/octet-stream";
+				const key = `tracker/${taskId}/${Date.now()}-${name}`;
+				await this.env.MEDIA.put(key, buffer, { httpMetadata: { contentType: mimeType } });
+				return jsonText({ key, url: `${baseUrl}/api/tracker/file/${key}`, name, size: buffer.byteLength });
+			},
+		);
+
+		this.server.tool(
+			"tracker_delete_file",
+			"Delete a file attachment from a tracker task by its R2 key",
+			{
+				key: z.string().describe("R2 key from tracker_list_task_files, e.g. tracker/42/1234567890-brief.pdf"),
+			},
+			async ({ key }) => {
+				await this.env.MEDIA.delete(key);
+				return { content: [{ type: "text" as const, text: `Deleted file ${key}` }] };
 			},
 		);
 	}

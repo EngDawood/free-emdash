@@ -63,6 +63,36 @@ const pageCtx = createPublicPageContext({
 	articleMeta: { publishedTime, modifiedTime, author },
 	siteName: siteTitle,
 });
+
+// hreflang: strip locale prefix then build per-locale hrefs
+const pathWithoutLocale = Astro.url.pathname.replace(/^\/(ar|en)/, "") || "/";
+const hrefAr = `${Astro.url.origin}/ar${pathWithoutLocale === "/" ? "" : pathWithoutLocale}`;
+const hrefEn = `${Astro.url.origin}/en${pathWithoutLocale === "/" ? "" : pathWithoutLocale}`;
+
+// JSON-LD
+const websiteSchema = {
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	name: siteTitle,
+	url: Astro.url.origin,
+};
+const articleSchema =
+	type === "article" && publishedTime
+		? {
+				"@context": "https://schema.org",
+				"@type": "BlogPosting",
+				headline: title ?? fullTitle,
+				url: canonical ?? Astro.url.href,
+				datePublished: publishedTime,
+				dateModified: modifiedTime ?? publishedTime,
+				description: description ?? siteDescription,
+				...(image ? { image } : {}),
+				author: {
+					"@type": "Person",
+					name: author ?? siteTitle,
+				},
+			}
+		: null;
 ---
 
 <!doctype html>
@@ -72,14 +102,22 @@ const pageCtx = createPublicPageContext({
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>{fullTitle}</title>
 		<EmDashHead page={pageCtx} />
+		<link rel="alternate" hreflang="ar" href={hrefAr} />
+		<link rel="alternate" hreflang="en" href={hrefEn} />
+		<link rel="alternate" hreflang="x-default" href={hrefAr} />
+		<script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+		{articleSchema && <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />}
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
-			rel="stylesheet"
+			rel="preload"
+			href="/fonts/Al-Jazeera-Regular.0112de0f.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
 		/>
 		<link
-			href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..700&display=swap"
 			rel="stylesheet"
 		/>
 		<link
@@ -133,6 +171,7 @@ const pageCtx = createPublicPageContext({
 						<svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
 					</button>
 					<LanguageSwitcher locale={locale} />
+					{isLoggedIn && <a href="/tracker" class="nav-admin">Tracker</a>}
 					{isLoggedIn ? (
 						<a href="/_emdash/admin" class="nav-admin">Admin</a>
 					) : (
