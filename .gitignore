@@ -30,3 +30,13 @@ dist/*
 .mcp.json
 reports/*
 uploads/*
+.gemini/*
+
+.vscode/*
+.wrangler/*
+patches/*
+CLAUDE-mcp.md
+CLAUDE-tracker.md
+CLAUDE.CLOUDFLARE.md
+CLAUDE.EMDASH.md
+GEMINI.md

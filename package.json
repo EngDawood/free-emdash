@@ -11,7 +11,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "astro build && wrangler deploy",
+    "deploy": "astro build && wrangler deploy --config wrangler.prod.jsonc",
     "bootstrap": "npx emdash init && npx emdash seed seed/seed.json",
     "typecheck": "astro check"
   },
@@ -32,6 +32,8 @@
     "@astrojs/check": "^0.9.7",
     "@cloudflare/workers-types": "^4.20260401.1",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "wrangler": "^4.81.1"
   }
 }
