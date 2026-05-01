@@ -37,7 +37,7 @@ export class EmDashMCP extends McpAgent<Env> {
 
 		this.server.tool(
 			"list_collections",
-			"List all content collections (projects, posts, pages, etc.)",
+			"List all content collections defined in the CMS (e.g. projects, posts, pages). Returns each collection's slug, label, and field schema — use the slug with list_content, create_content, etc.",
 			{},
 			async () => {
 				const collections = await client.collections();
@@ -51,7 +51,7 @@ export class EmDashMCP extends McpAgent<Env> {
 
 		this.server.tool(
 			"list_content",
-			"List entries in a collection (e.g. projects, posts)",
+			"List entries in a content collection. Returns an array of entries with their ID, slug, status, and all field values. Use list_collections first to discover available collections and their fields.",
 			{
 				collection: z.string().describe("Collection slug: projects, posts, or pages"),
 				status: z.enum(["published", "draft", "all"]).optional().describe("Filter by status (default: all)"),
@@ -135,7 +135,7 @@ export class EmDashMCP extends McpAgent<Env> {
 
 		this.server.tool(
 			"publish_content",
-			"Publish a draft entry",
+			"Publish a draft entry, making it publicly visible on the site. Has no effect if the entry is already published.",
 			{
 				collection: z.string().describe("Collection slug: projects, posts, or pages"),
 				id: z.string().describe("Entry ID"),
@@ -152,7 +152,7 @@ export class EmDashMCP extends McpAgent<Env> {
 
 		this.server.tool(
 			"search_content",
-			"Full-text search across all content",
+			"Full-text search across all CMS content. Returns matching entries with their collection, slug, title, and a text excerpt around the match. Useful for finding existing posts or projects before creating duplicates.",
 			{
 				query: z.string().describe("Search query"),
 				collection: z.string().optional().describe("Limit to a specific collection (projects, posts, etc.)"),
@@ -170,7 +170,7 @@ export class EmDashMCP extends McpAgent<Env> {
 
 		this.server.tool(
 			"list_media",
-			"List uploaded media files",
+			"List uploaded media files in the library. Returns each item's ID, filename, MIME type, size, and dimensions (for images). Use the ID to reference media in content fields.",
 			{
 				limit: z.number().int().min(1).max(100).optional().describe("Max items (default: 50)"),
 				mimeType: z.string().optional().describe("Filter by MIME type, e.g. image/jpeg"),
@@ -449,22 +449,22 @@ export class EmDashMCP extends McpAgent<Env> {
 			"Update fields on an existing tracker task. Only provide fields you want to change.",
 			{
 				id: z.number().int().describe("Task ID"),
-				client: z.string().optional(),
-				university: z.string().optional(),
-				course: z.string().optional(),
+				client: z.string().optional().describe("Client name"),
+				university: z.string().optional().describe("University or institution name"),
+				course: z.string().optional().describe("Course name"),
 				title_en: z.string().optional().describe("Task title in English"),
 				title_ar: z.string().optional().describe("Task title in Arabic"),
-				type: z.string().optional(),
-				deadline: z.string().optional().describe("YYYY-MM-DD"),
-				priority: z.enum(["hi", "med", "lo"]).optional(),
-				status: z.enum(["new", "progress", "done", "cancel"]).optional(),
-				price: z.number().optional(),
-				payment: z.enum(["paid", "half", "unpaid"]).optional(),
-				claude: z.string().optional().describe("Claude account tier"),
-				fatora: z.string().optional().describe("Fatora invoice status"),
-				fatora_link: z.string().optional(),
-				notes: z.string().optional(),
-				instructions: z.string().optional(),
+				type: z.string().optional().describe("Task type: Assignment, Project, Exam Prep, Thesis, Report, Lab"),
+				deadline: z.string().optional().describe("Deadline date in YYYY-MM-DD format"),
+				priority: z.enum(["hi", "med", "lo"]).optional().describe("Priority: hi=high, med=medium, lo=low"),
+				status: z.enum(["new", "progress", "done", "cancel"]).optional().describe("Status: new, progress, done, cancel"),
+				price: z.number().optional().describe("Price amount"),
+				payment: z.enum(["paid", "half", "unpaid"]).optional().describe("Payment status: paid, half, unpaid"),
+				claude: z.string().optional().describe("Claude account tier: Pro, Max, API, Team"),
+				fatora: z.string().optional().describe("Fatora invoice status: paid, active, unknown"),
+				fatora_link: z.string().optional().describe("Fatora invoice URL (https://fato.me/v/...)"),
+				notes: z.string().optional().describe("Private internal notes"),
+				instructions: z.string().optional().describe("Client requirements and instructions"),
 				log: z.array(z.object({ when: z.string(), who: z.string(), what: z.string() })).optional().describe("Full activity log array (replaces existing)"),
 			},
 			async ({ id, client, university, course, title_en, title_ar, type, deadline, priority, status, price, payment, claude, fatora, fatora_link, notes, instructions, log }) => {
@@ -528,26 +528,21 @@ export class EmDashMCP extends McpAgent<Env> {
 
 		this.server.tool(
 			"tracker_list_task_files",
-			"List files attached to a tracker task. Returns keys, sizes, and download URLs.",
+			"List files attached to a tracker task. Returns file IDs, names, sizes, and download URLs.",
 			{
 				taskId: z.number().int().describe("Task ID"),
 			},
 			async ({ taskId }) => {
-				const list = await this.env.MEDIA.list({ prefix: `tracker/${taskId}/` });
-				const files = list.objects.map((obj) => ({
-					key: obj.key,
-					name: obj.key.split("/").pop(),
-					size: obj.size,
-					uploaded: obj.uploaded,
-					url: `${baseUrl}/api/tracker/file/${obj.key}`,
-				}));
-				return jsonText(files);
+				const row = await this.env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
+					.bind(taskId)
+					.first<{ files: string | null }>();
+				return jsonText(JSON.parse(row?.files ?? "[]"));
 			},
 		);
 
 		this.server.tool(
 			"tracker_upload_file",
-			"Upload a file attachment to a tracker task from base64-encoded content. Returns the file key and download URL.",
+			"Upload a file attachment to a tracker task from base64-encoded content. The file is registered in the EmDash media library and attached to the task.",
 			{
 				taskId: z.number().int().describe("Task ID to attach the file to"),
 				base64: z.string().describe("Base64-encoded file content"),
@@ -556,17 +551,27 @@ export class EmDashMCP extends McpAgent<Env> {
 			},
 			async ({ taskId, base64, filename, mimeType }) => {
 				const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-				const key = `tracker/${taskId}/${Date.now()}-${filename}`;
-				await this.env.MEDIA.put(key, binary, {
-					httpMetadata: { contentType: mimeType ?? "application/octet-stream" },
-				});
-				return jsonText({ key, url: `${baseUrl}/api/tracker/file/${key}`, name: filename, size: binary.byteLength });
+				const blob = new Blob([binary], { type: mimeType ?? "application/octet-stream" });
+				const item = await client.mediaUpload(blob, filename, { contentType: mimeType });
+
+				const fileRef = { id: item.id, key: item.key, name: filename, size: item.size, url: `${baseUrl}/api/tracker/file/${item.key}` };
+
+				const row = await this.env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
+					.bind(taskId)
+					.first<{ files: string | null }>();
+				const files = JSON.parse(row?.files ?? "[]");
+				files.push(fileRef);
+				await this.env.TRACKER_DB.prepare("UPDATE tasks SET files = ? WHERE id = ?")
+					.bind(JSON.stringify(files), taskId)
+					.run();
+
+				return jsonText(fileRef);
 			},
 		);
 
 		this.server.tool(
 			"tracker_upload_file_from_url",
-			"Fetch a file from a URL and attach it to a tracker task. Returns the file key and download URL.",
+			"Fetch a file from a URL and attach it to a tracker task. The file is registered in the EmDash media library.",
 			{
 				taskId: z.number().int().describe("Task ID to attach the file to"),
 				url: z.string().url().describe("Public URL of the file to fetch"),
@@ -575,24 +580,50 @@ export class EmDashMCP extends McpAgent<Env> {
 			async ({ taskId, url: fileUrl, filename }) => {
 				const response = await fetch(fileUrl);
 				if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}: HTTP ${response.status}`);
-				const buffer = await response.arrayBuffer();
+				const blob = await response.blob();
 				const name = filename ?? fileUrl.split("/").pop()?.split("?")[0] ?? "file";
-				const mimeType = response.headers.get("content-type") ?? "application/octet-stream";
-				const key = `tracker/${taskId}/${Date.now()}-${name}`;
-				await this.env.MEDIA.put(key, buffer, { httpMetadata: { contentType: mimeType } });
-				return jsonText({ key, url: `${baseUrl}/api/tracker/file/${key}`, name, size: buffer.byteLength });
+				const item = await client.mediaUpload(blob, name);
+
+				const fileRef = { id: item.id, key: item.key, name, size: item.size, url: `${baseUrl}/api/tracker/file/${item.key}` };
+
+				const row = await this.env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
+					.bind(taskId)
+					.first<{ files: string | null }>();
+				const files = JSON.parse(row?.files ?? "[]");
+				files.push(fileRef);
+				await this.env.TRACKER_DB.prepare("UPDATE tasks SET files = ? WHERE id = ?")
+					.bind(JSON.stringify(files), taskId)
+					.run();
+
+				return jsonText(fileRef);
 			},
 		);
 
 		this.server.tool(
 			"tracker_delete_file",
-			"Delete a file attachment from a tracker task by its R2 key",
+			"Delete a file attachment from a tracker task. Removes it from the task and the EmDash media library.",
 			{
-				key: z.string().describe("R2 key from tracker_list_task_files, e.g. tracker/42/1234567890-brief.pdf"),
+				taskId: z.number().int().describe("Task ID the file belongs to"),
+				fileId: z.string().describe("File ID from tracker_list_task_files"),
 			},
-			async ({ key }) => {
-				await this.env.MEDIA.delete(key);
-				return { content: [{ type: "text" as const, text: `Deleted file ${key}` }] };
+			async ({ taskId, fileId }) => {
+				const row = await this.env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
+					.bind(taskId)
+					.first<{ files: string | null }>();
+				const files = (JSON.parse(row?.files ?? "[]") as Array<{ id: string; key: string }>).filter(
+					(f) => f.id !== fileId,
+				);
+				await this.env.TRACKER_DB.prepare("UPDATE tasks SET files = ? WHERE id = ?")
+					.bind(JSON.stringify(files), taskId)
+					.run();
+
+				try {
+					await req("DELETE", `/media/${fileId}`);
+				} catch {
+					// EmDash delete failed — file may still appear in dashboard but is detached from task
+				}
+
+				return jsonText({ ok: true });
 			},
 		);
 	}
