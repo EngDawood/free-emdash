@@ -1,4 +1,5 @@
 import handler from "@astrojs/cloudflare/entrypoints/server";
+import { EmDashClient } from "emdash/client";
 import { EmDashMCP } from "./mcp";
 
 interface WorkerEnv extends Cloudflare.Env {
@@ -57,26 +58,43 @@ async function handleTrackerUpload(request: Request, env: WorkerEnv): Promise<Re
 	const taskId = form.get("taskId") as string;
 	if (!file || !taskId) return new Response("Bad request", { status: 400 });
 
-	// Upload via EmDash media API so the file appears in the dashboard
-	const baseUrl = new URL(request.url).origin;
-	const mediaForm = new FormData();
-	mediaForm.append("file", file, file.name);
-	const mediaRes = await fetch(`${baseUrl}/_emdash/api/media`, {
-		method: "POST",
-		body: mediaForm,
-		headers: { Cookie: request.headers.get("Cookie") ?? "" },
-	});
-	if (!mediaRes.ok) return new Response("Media upload failed", { status: 502 });
-	const { data } = (await mediaRes.json()) as { data: { item: { id: string; key: string; size: number } } };
-	const item = data.item;
+	let fileRef: TaskFileRef;
 
-	const fileRef: TaskFileRef = {
-		id: item.id,
-		key: item.key,
-		name: file.name,
-		size: item.size,
-		url: `/api/tracker/file/${item.key}`,
-	};
+	const isBearerAuth = (request.headers.get("Authorization") ?? "").startsWith("Bearer ");
+
+	if (isBearerAuth) {
+		// Programmatic upload: use EmDashClient so the file appears in the media dashboard
+		const baseUrl = new URL(request.url).origin;
+		const client = new EmDashClient({ baseUrl, token: env.EMDASH_TOKEN });
+		const item = await client.mediaUpload(file, file.name, { contentType: file.type || undefined });
+		fileRef = {
+			id: item.id,
+			key: item.key,
+			name: file.name,
+			size: item.size,
+			url: `/api/tracker/file/${item.key}`,
+		};
+	} else {
+		// Browser upload: go through EmDash media API so the file appears in the dashboard
+		const baseUrl = new URL(request.url).origin;
+		const mediaForm = new FormData();
+		mediaForm.append("file", file, file.name);
+		const mediaRes = await fetch(`${baseUrl}/_emdash/api/media`, {
+			method: "POST",
+			body: mediaForm,
+			headers: { Cookie: request.headers.get("Cookie") ?? "" },
+		});
+		if (!mediaRes.ok) return new Response("Media upload failed", { status: 502 });
+		const { data } = (await mediaRes.json()) as { data: { item: { id: string; key: string; size: number } } };
+		const item = data.item;
+		fileRef = {
+			id: item.id,
+			key: item.key,
+			name: file.name,
+			size: item.size,
+			url: `/api/tracker/file/${item.key}`,
+		};
+	}
 
 	// Append to tasks.files JSON in D1
 	const row = await env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
@@ -155,7 +173,9 @@ export default {
 
 		// ── Tracker API — intercepted before Astro to avoid body consumption ──
 		if (url.pathname.startsWith("/api/tracker")) {
-			if (!(await isAuthenticated(request, env))) {
+			const bearerToken = request.headers.get("Authorization")?.replace("Bearer ", "");
+			const hasValidToken = env.EMDASH_TOKEN && bearerToken === env.EMDASH_TOKEN;
+			if (!hasValidToken && !(await isAuthenticated(request, env))) {
 				return new Response("Unauthorized", { status: 401 });
 			}
 			if (url.pathname === "/api/tracker" && request.method === "POST") {

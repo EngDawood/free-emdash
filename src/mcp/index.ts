@@ -418,7 +418,7 @@ export class EmDashMCP extends McpAgent<Env> {
 				type: z.string().optional().describe("Task type, e.g. Assignment, Project, Exam"),
 				deadline: z.string().optional().describe("Deadline date in YYYY-MM-DD format"),
 				priority: z.enum(["hi", "med", "lo"]).optional().describe("Priority (default: med)"),
-				status: z.enum(["new", "progress", "done", "cancel"]).optional().describe("Status (default: new)"),
+				status: z.enum(["new", "progress", "in_progress", "done", "cancel"]).transform(s => s === "in_progress" ? "progress" : s).optional().describe("Status: new, progress, done, cancel (in_progress also accepted)"),
 				price: z.number().optional().describe("Price amount"),
 				payment: z.enum(["paid", "half", "unpaid"]).optional().describe("Payment status (default: unpaid)"),
 				claude: z.string().optional().describe("Claude account tier: Pro, Max, API, Team"),
@@ -457,7 +457,7 @@ export class EmDashMCP extends McpAgent<Env> {
 				type: z.string().optional().describe("Task type: Assignment, Project, Exam Prep, Thesis, Report, Lab"),
 				deadline: z.string().optional().describe("Deadline date in YYYY-MM-DD format"),
 				priority: z.enum(["hi", "med", "lo"]).optional().describe("Priority: hi=high, med=medium, lo=low"),
-				status: z.enum(["new", "progress", "done", "cancel"]).optional().describe("Status: new, progress, done, cancel"),
+				status: z.enum(["new", "progress", "in_progress", "done", "cancel"]).transform(s => s === "in_progress" ? "progress" : s).optional().describe("Status: new, progress, done, cancel (in_progress also accepted)"),
 				price: z.number().optional().describe("Price amount"),
 				payment: z.enum(["paid", "half", "unpaid"]).optional().describe("Payment status: paid, half, unpaid"),
 				claude: z.string().optional().describe("Claude account tier: Pro, Max, API, Team"),
@@ -530,11 +530,11 @@ export class EmDashMCP extends McpAgent<Env> {
 			"tracker_list_task_files",
 			"List files attached to a tracker task. Returns file IDs, names, sizes, and download URLs.",
 			{
-				taskId: z.number().int().describe("Task ID"),
+				task_id: z.number().int().describe("Task ID"),
 			},
-			async ({ taskId }) => {
+			async ({ task_id }) => {
 				const row = await this.env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
-					.bind(taskId)
+					.bind(task_id)
 					.first<{ files: string | null }>();
 				return jsonText(JSON.parse(row?.files ?? "[]"));
 			},
@@ -542,14 +542,20 @@ export class EmDashMCP extends McpAgent<Env> {
 
 		this.server.tool(
 			"tracker_upload_file",
-			"Upload a file attachment to a tracker task from base64-encoded content. The file is registered in the EmDash media library and attached to the task.",
+			`Upload a file attachment to a tracker task from base64-encoded content.
+NOTE: For local files on disk, prefer using curl via Bash instead of base64 — it avoids context size limits:
+  curl -X POST ${baseUrl}/api/tracker/upload \\
+    -H "Authorization: Bearer <EMDASH_TOKEN>" \\
+    -F "file=@/absolute/path/to/file.pdf" \\
+    -F "taskId=<task_id>"
+Only use this base64 tool for small files or when Bash is unavailable.`,
 			{
-				taskId: z.number().int().describe("Task ID to attach the file to"),
+				task_id: z.number().int().describe("Task ID to attach the file to"),
 				base64: z.string().describe("Base64-encoded file content"),
 				filename: z.string().describe("Filename including extension, e.g. brief.pdf"),
 				mimeType: z.string().optional().describe("MIME type, e.g. application/pdf"),
 			},
-			async ({ taskId, base64, filename, mimeType }) => {
+			async ({ task_id, base64, filename, mimeType }) => {
 				const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 				const blob = new Blob([binary], { type: mimeType ?? "application/octet-stream" });
 				const item = await client.mediaUpload(blob, filename, { contentType: mimeType });
@@ -557,12 +563,12 @@ export class EmDashMCP extends McpAgent<Env> {
 				const fileRef = { id: item.id, key: item.key, name: filename, size: item.size, url: `${baseUrl}/api/tracker/file/${item.key}` };
 
 				const row = await this.env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
-					.bind(taskId)
+					.bind(task_id)
 					.first<{ files: string | null }>();
 				const files = JSON.parse(row?.files ?? "[]");
 				files.push(fileRef);
 				await this.env.TRACKER_DB.prepare("UPDATE tasks SET files = ? WHERE id = ?")
-					.bind(JSON.stringify(files), taskId)
+					.bind(JSON.stringify(files), task_id)
 					.run();
 
 				return jsonText(fileRef);
@@ -573,11 +579,11 @@ export class EmDashMCP extends McpAgent<Env> {
 			"tracker_upload_file_from_url",
 			"Fetch a file from a URL and attach it to a tracker task. The file is registered in the EmDash media library.",
 			{
-				taskId: z.number().int().describe("Task ID to attach the file to"),
+				task_id: z.number().int().describe("Task ID to attach the file to"),
 				url: z.string().url().describe("Public URL of the file to fetch"),
 				filename: z.string().optional().describe("Override filename (default: derived from URL)"),
 			},
-			async ({ taskId, url: fileUrl, filename }) => {
+			async ({ task_id, url: fileUrl, filename }) => {
 				const response = await fetch(fileUrl);
 				if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}: HTTP ${response.status}`);
 				const blob = await response.blob();
@@ -587,12 +593,12 @@ export class EmDashMCP extends McpAgent<Env> {
 				const fileRef = { id: item.id, key: item.key, name, size: item.size, url: `${baseUrl}/api/tracker/file/${item.key}` };
 
 				const row = await this.env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
-					.bind(taskId)
+					.bind(task_id)
 					.first<{ files: string | null }>();
 				const files = JSON.parse(row?.files ?? "[]");
 				files.push(fileRef);
 				await this.env.TRACKER_DB.prepare("UPDATE tasks SET files = ? WHERE id = ?")
-					.bind(JSON.stringify(files), taskId)
+					.bind(JSON.stringify(files), task_id)
 					.run();
 
 				return jsonText(fileRef);
@@ -603,18 +609,18 @@ export class EmDashMCP extends McpAgent<Env> {
 			"tracker_delete_file",
 			"Delete a file attachment from a tracker task. Removes it from the task and the EmDash media library.",
 			{
-				taskId: z.number().int().describe("Task ID the file belongs to"),
+				task_id: z.number().int().describe("Task ID the file belongs to"),
 				fileId: z.string().describe("File ID from tracker_list_task_files"),
 			},
-			async ({ taskId, fileId }) => {
+			async ({ task_id, fileId }) => {
 				const row = await this.env.TRACKER_DB.prepare("SELECT files FROM tasks WHERE id = ?")
-					.bind(taskId)
+					.bind(task_id)
 					.first<{ files: string | null }>();
 				const files = (JSON.parse(row?.files ?? "[]") as Array<{ id: string; key: string }>).filter(
 					(f) => f.id !== fileId,
 				);
 				await this.env.TRACKER_DB.prepare("UPDATE tasks SET files = ? WHERE id = ?")
-					.bind(JSON.stringify(files), taskId)
+					.bind(JSON.stringify(files), task_id)
 					.run();
 
 				try {
