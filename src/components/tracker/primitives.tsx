@@ -1,6 +1,6 @@
 import { useEffect, type RefObject } from 'react';
 import Icon from './icons';
-import { STATUS, PRIORITY, PAYMENT, type Lang } from './data';
+import { STATUS, PRIORITY, PAYMENT, currency, type Lang } from './data';
 
 interface PillProps {
   kind: 'status' | 'priority' | 'payment';
@@ -32,6 +32,15 @@ export function IconBtn({ icon, onClick, title, size = 14 }: IconBtnProps) {
     <button className="btn btn--ghost btn--icon" title={title} onClick={onClick} aria-label={title}>
       <Icon name={icon} size={size} />
     </button>
+  );
+}
+
+export function SAR({ amount }: { amount: number }) {
+  return (
+    <span>
+      <span className="sar-symbol">&#xea;</span>
+      {' '}{currency(amount)}
+    </span>
   );
 }
 

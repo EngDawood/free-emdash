@@ -1,6 +1,6 @@
 import Icon from './icons';
-import { Pill } from './primitives';
-import { STATUS, daysUntil, formatDate, formatRel, currency, type Task, type Lang } from './data';
+import { Pill, SAR } from './primitives';
+import { STATUS, daysUntil, formatDate, formatRel, type Task, type Lang } from './data';
 
 interface BoardProps {
   tasks: Task[];
@@ -24,7 +24,7 @@ export function Board({ tasks, lang, onOpen }: BoardProps) {
                 {s[lang]}
               </h3>
               <span className="col__count mono">{items.length}</span>
-              <span className="col__sum">${currency(sum)}</span>
+              <span className="col__sum"><SAR amount={sum} /></span>
             </div>
             <div className="col__body">
               {items.map(task => (
@@ -86,7 +86,7 @@ function Card({ task, lang, onOpen }: CardProps) {
       </div>
       <div className="card__bottom">
         <Pill kind="payment" value={task.payment} lang={lang} />
-        <span className="price mono">${currency(task.price)}</span>
+        <span className="price mono"><SAR amount={task.price} /></span>
       </div>
     </div>
   );

@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import Icon from './icons';
 import { IconBtn } from './primitives';
-import { CLIENTS, TYPES, STATUS, PRIORITY, PAYMENT, T, type Task, type Lang, type TaskFile, loadTaskFiles, uploadTaskFile, deleteTaskFile } from './data';
+import { CLIENTS, TYPES, CLAUDE_ACCOUNTS, STATUS, PRIORITY, PAYMENT, T, type Task, type Lang, type TaskFile, loadTaskFiles, uploadTaskFile, deleteTaskFile } from './data';
 
 interface DrawerProps {
   task: Task;
   lang: Lang;
+  claudeAccounts?: string[];
+  taskTypes?: string[];
   onClose: () => void;
   onUpdate: (id: number, patch: Partial<Task>) => void;
   onDelete: (id: number) => void;
 }
 
-export function Drawer({ task, lang, onClose, onUpdate, onDelete }: DrawerProps) {
+export function Drawer({ task, lang, claudeAccounts = CLAUDE_ACCOUNTS, taskTypes = TYPES, onClose, onUpdate, onDelete }: DrawerProps) {
   const t = T[lang];
   const [form, setForm] = useState<Task>(task);
   const [files, setFiles] = useState<TaskFile[]>([]);
@@ -111,7 +113,7 @@ export function Drawer({ task, lang, onClose, onUpdate, onDelete }: DrawerProps)
             <div className="field">
               <label className="field__label">{t.type}</label>
               <select className="select" value={form.type} onChange={e => set('type', e.target.value)}>
-                {TYPES.map(x => <option key={x} value={x}>{x}</option>)}
+                {taskTypes.map(x => <option key={x} value={x}>{x}</option>)}
               </select>
             </div>
             <div className="field">
@@ -138,7 +140,7 @@ export function Drawer({ task, lang, onClose, onUpdate, onDelete }: DrawerProps)
             <div className="field">
               <label className="field__label">{t.claude}</label>
               <select className="select" value={form.claude} onChange={e => set('claude', e.target.value)}>
-                {['Pro', 'Max', 'API', 'Team'].map(x => <option key={x}>{x}</option>)}
+                {claudeAccounts.map(x => <option key={x}>{x}</option>)}
               </select>
             </div>
             <div className="field">

@@ -62,6 +62,8 @@ export function mapDbRow(row: DbTask): Task {
     notes: row.notes ?? '',
     instructions: row.instructions ?? '',
     log: (() => { try { return JSON.parse(row.log ?? '[]'); } catch { return []; } })(),
+    created_at: row.created_at ?? undefined,
+    updated_at: row.updated_at ?? undefined,
   };
 }
 
@@ -116,4 +118,29 @@ export async function updateTaskInDb(id: number, patch: Partial<Task>): Promise<
 
 export async function deleteTaskInDb(id: number): Promise<void> {
   await q('DELETE FROM tasks WHERE id = ?', [id]);
+}
+
+// ── Tracker lists (Claude accounts, task types) ───────────────────────────────
+
+export interface ListItem {
+  id: number;
+  list_key: string;
+  value: string;
+  sort_order: number;
+}
+
+export async function loadListsWithIds(): Promise<ListItem[]> {
+  const res = await q<ListItem>('SELECT id, list_key, value, sort_order FROM tracker_lists ORDER BY list_key, sort_order ASC');
+  return res.results;
+}
+
+export async function addListItem(listKey: string, value: string): Promise<number> {
+  const countRes = await q<{ cnt: number }>('SELECT COUNT(*) as cnt FROM tracker_lists WHERE list_key = ?', [listKey]);
+  const cnt = (countRes.results[0] as { cnt: number })?.cnt ?? 0;
+  const res = await q('INSERT INTO tracker_lists (list_key, value, sort_order) VALUES (?, ?, ?)', [listKey, value, cnt]);
+  return res.meta.last_row_id;
+}
+
+export async function removeListItem(id: number): Promise<void> {
+  await q('DELETE FROM tracker_lists WHERE id = ?', [id]);
 }

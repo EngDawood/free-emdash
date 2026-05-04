@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
 import Icon from './icons';
-import { Pill, useClickOutside } from './primitives';
+import { Pill, SAR, useClickOutside } from './primitives';
 import {
   STATUS, PRIORITY, PAYMENT, T,
-  daysUntil, formatDate, formatRel, currency,
+  daysUntil, formatDate, formatRel,
   type Task, type Lang,
 } from './data';
 
@@ -119,7 +119,7 @@ function Row({ task, lang, onOpen, onUpdate, selected }: RowProps) {
 
   return (
     <tr className={selected ? 'is-selected' : ''}>
-      <td className="col-id">
+      <td className="col-id" onDoubleClick={onOpen} style={{ cursor: 'pointer' }}>
         <span className="mono">#{String(task.id).padStart(3, '0')}</span>
       </td>
 
@@ -209,14 +209,17 @@ function Row({ task, lang, onOpen, onUpdate, selected }: RowProps) {
             onBlur={commit}
           />
         ) : (
-          <>${currency(task.price)}</>
+          <SAR amount={task.price} />
         )}
       </td>
 
       <td className="col-actions">
         <div className="row-actions">
-          <button title={t.open} onClick={onOpen}><Icon name="edit" size={12} /></button>
-          <button title={t.duplicate}><Icon name="more" size={12} /></button>
+          <button className="row-open" title={t.open} onClick={onOpen} aria-label={t.open}>
+            <span>{lang === 'ar' ? 'فتح' : 'Open'}</span>
+            <Icon name="arrowR" size={11} />
+          </button>
+          <button className="row-more" title={t.duplicate}><Icon name="more" size={12} /></button>
         </div>
       </td>
     </tr>

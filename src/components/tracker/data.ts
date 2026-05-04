@@ -26,6 +26,8 @@ export interface Task {
   notes: string;
   instructions: string;
   log: Array<{ when: string; who: string; what: string }>;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface TaskFile {
@@ -109,6 +111,7 @@ export const CLIENTS: Client[] = [
 ];
 
 export const TYPES = ['Assignment', 'Project', 'Exam Prep', 'Thesis', 'Report', 'Lab'];
+export const CLAUDE_ACCOUNTS = ['davidh', 'engdawood', 'dawood', 'amoota', 'moh', 'adbalmlak'];
 
 export const TYPES_AR: Record<string, string> = {
   Assignment: 'واجب', Project: 'مشروع', 'Exam Prep': 'تحضير امتحان',
@@ -187,7 +190,7 @@ export const SEED: Task[] = TASKS_RAW.map(([id, ci, t_en, t_ar, type, deadline, 
   status: status as Task['status'],
   price,
   payment: payment as Task['payment'],
-  claude: ['Pro', 'Max', 'API', 'Team'][id % 4],
+  claude: ['davidh', 'engdawood', 'dawood', 'amoota', 'moh', 'adbalmlak'][id % 6],
   fatora: payment === 'paid' ? 'paid' : payment === 'half' ? 'active' : id % 5 === 0 ? 'active' : 'unknown',
   fatora_link: id % 3 === 0 ? null : `https://fato.me/v/${(id * 977).toString(16).toUpperCase().padStart(8, '0').slice(0, 8)}`,
   notes: '',

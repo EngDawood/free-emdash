@@ -16,6 +16,7 @@ interface ToolbarProps {
   onOpenPalette: () => void;
   onOpenColumns: () => void;
   onOpenTweaks: () => void;
+  onExport: (format: 'csv' | 'json') => void;
 }
 
 export function Toolbar({
@@ -23,7 +24,7 @@ export function Toolbar({
   query, setQuery,
   filters, setFilters,
   view, setView,
-  onNewTask, onOpenPalette, onOpenColumns, onOpenTweaks,
+  onNewTask, onOpenPalette, onOpenColumns, onOpenTweaks, onExport,
 }: ToolbarProps) {
   const t = T[lang];
   return (
@@ -91,6 +92,7 @@ export function Toolbar({
         <button className="btn btn--ghost" onClick={onOpenColumns} title={t.columns}>
           <Icon name="sliders" size={13} /> {t.columns}
         </button>
+        <ExportButton lang={lang} onExport={onExport} />
         <button className="btn btn--ghost" onClick={onOpenPalette} title="Command">
           <Icon name="cmd" size={13} />
         </button>
@@ -119,6 +121,55 @@ interface FilterDropdownProps {
   onChange: (v: string) => void;
   options: Option[];
   lang: Lang;
+}
+
+function ExportButton({ lang, onExport }: { lang: Lang; onExport: (format: 'csv' | 'json') => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useClickOutside(ref, () => setOpen(false));
+  return (
+    <div style={{ position: 'relative' }} ref={ref}>
+      <button className="btn btn--ghost" onClick={() => setOpen(o => !o)} title="Export">
+        <Icon name="download" size={13} />
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 4px)',
+          [lang === 'ar' ? 'left' : 'right']: 0,
+          background: 'var(--surface)',
+          border: '1px solid var(--line-strong)',
+          borderRadius: 8,
+          boxShadow: 'var(--shadow-md)',
+          padding: 4,
+          minWidth: 140,
+          zIndex: 20,
+        }}>
+          {(['csv', 'json'] as const).map(fmt => (
+            <button
+              key={fmt}
+              onClick={() => { onExport(fmt); setOpen(false); }}
+              style={{
+                width: '100%',
+                textAlign: lang === 'ar' ? 'right' : 'left',
+                padding: '6px 10px',
+                borderRadius: 5,
+                fontSize: 12.5,
+                color: 'var(--ink-2)',
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <Icon name="download" size={11} />
+              <span>{fmt === 'csv' ? 'Export as CSV' : 'Export as JSON'}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function FilterDropdown({ label, value, onChange, options, lang }: FilterDropdownProps) {

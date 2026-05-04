@@ -1,4 +1,5 @@
 import Icon from './icons';
+import { SAR } from './primitives';
 import { daysUntil, currency, T, type Task, type Lang } from './data';
 
 interface SummaryProps {
@@ -57,10 +58,10 @@ export function Summary({ tasks, lang }: SummaryProps) {
           {t.sum_earn}
         </div>
         <div className="summary__value">
-          <span className="mono">${currency(earn)}</span>
+          <span className="mono"><SAR amount={earn} /></span>
         </div>
         <div className="summary__delta up">
-          <Icon name="arrowUp" size={11} /> +{currency(Math.round(earn * 0.14))} vs last Q
+          <Icon name="arrowUp" size={11} /> +<SAR amount={Math.round(earn * 0.14)} /> vs last Q
         </div>
       </div>
 
@@ -70,7 +71,7 @@ export function Summary({ tasks, lang }: SummaryProps) {
           {t.sum_unpaid}
         </div>
         <div className="summary__value">
-          <span className="mono">${currency(unpaid)}</span>
+          <span className="mono"><SAR amount={unpaid} /></span>
         </div>
         <div className="summary__delta">
           <span style={{ color: 'var(--err)' }}>{tasks.filter(x => x.payment === 'unpaid' && x.status !== 'cancel').length}</span>{' '}

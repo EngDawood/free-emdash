@@ -45,6 +45,8 @@ const Icon: FC<IconProps> = ({ name, size = 16 }) => {
     arrowUp:   <path d="M8 13V3m0 0L4 7m4-4l4 4" />,
     arrowDown: <path d="M8 3v10m0 0l4-4m-4 4l-4-4" />,
     settings: <><circle cx="8" cy="8" r="2.5" /><path d="M9.9 2.7l.8 1.3h1.5l.8 1.4-1 1.1.2 1.5-1.4.7-1 1.3H8.2L7 11l-1.5-.7.2-1.5-1-1.1.8-1.4h1.5l.8-1.3h2.1z" /></>,
+    refresh:  <path d="M13 8a5 5 0 1 1-1-3M13 2v3h-3" />,
+    download: <path d="M8 3v7m0 0L5 7m3 3l3-3M3 13h10" />,
   };
 
   return (

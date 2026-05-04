@@ -8,9 +8,11 @@ import { Board } from './board';
 import { Drawer } from './drawer';
 import { Palette } from './palette';
 import { TweaksPanel } from './tweaks';
-import { loadAll, insertTask, updateTaskInDb, deleteTaskInDb } from './api';
+import { loadAll, insertTask, updateTaskInDb, deleteTaskInDb, loadListsWithIds, type ListItem } from './api';
+import { SettingsPanel } from './settings';
 import {
-  CLIENTS, T, daysUntil,
+  CLIENTS, TYPES, CLAUDE_ACCOUNTS, T, daysUntil,
+  loadTaskFiles,
   type Task, type Lang, type Tweaks, type Filters,
 } from './data';
 
@@ -123,7 +125,7 @@ function Sidebar({
   );
 }
 
-function Topbar({ lang, tasks }: { lang: Lang; tasks: Task[] }) {
+function Topbar({ lang, tasks, onRefresh, refreshing }: { lang: Lang; tasks: Task[]; onRefresh: () => void; refreshing: boolean }) {
   const t = T[lang];
   return (
     <header className="topbar">
@@ -144,6 +146,15 @@ function Topbar({ lang, tasks }: { lang: Lang; tasks: Task[] }) {
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)', boxShadow: '0 0 0 3px var(--ok-soft)' }} />
             LIVE
           </span>
+          <button
+            className="btn btn--ghost"
+            title="Refresh"
+            onClick={onRefresh}
+            disabled={refreshing}
+            style={{ opacity: refreshing ? 0.5 : 1 }}
+          >
+            <Icon name="refresh" size={13} />
+          </button>
           <button className="btn btn--ghost" title="Notifications">
             <Icon name="bell" size={13} />
           </button>
@@ -159,6 +170,8 @@ export default function TrackerApp() {
   const [lang, setLang] = useState<Lang>('en');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [listItems, setListItems] = useState<ListItem[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filters>({ status: '', priority: '', payment: '', quick: '' });
   const [sortKey, setSortKey] = useState('deadline');
@@ -168,13 +181,36 @@ export default function TrackerApp() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  // Load tasks from DB on mount
-  useEffect(() => {
-    loadAll()
-      .then(setTasks)
-      .catch(e => console.error('[Tracker] load failed:', e))
-      .finally(() => setLoading(false));
-  }, []);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function refresh(initial = false) {
+    initial ? setLoading(true) : setRefreshing(true);
+    try {
+      const [tasks, items] = await Promise.all([
+        loadAll(),
+        loadListsWithIds().catch(() => [] as ListItem[]),
+      ]);
+      setTasks(tasks);
+      if (items.length) setListItems(items);
+    } catch (e) {
+      console.error('[Tracker] load failed:', e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  useEffect(() => { refresh(true); }, []);
+
+  const claudeAccounts = useMemo(() => {
+    const vals = listItems.filter(x => x.list_key === 'claude_accounts').map(x => x.value);
+    return vals.length ? vals : CLAUDE_ACCOUNTS;
+  }, [listItems]);
+
+  const taskTypes = useMemo(() => {
+    const vals = listItems.filter(x => x.list_key === 'task_types').map(x => x.value);
+    return vals.length ? vals : TYPES;
+  }, [listItems]);
 
   // Apply data-* attrs to html element
   useEffect(() => {
@@ -266,6 +302,45 @@ export default function TrackerApp() {
     else { setSortKey(k); setSortDir('asc'); }
   }
 
+  async function exportTasks(format: 'csv' | 'json') {
+    const today = new Date().toISOString().slice(0, 10);
+    const data = filtered;
+
+    const fileResults = await Promise.all(
+      data.map(t => loadTaskFiles(t.id).catch(() => [] as Awaited<ReturnType<typeof loadTaskFiles>>))
+    );
+    const dataWithFiles = data.map((t, i) => ({
+      ...t,
+      files: fileResults[i].map(f => ({ name: f.name, size: f.size, url: f.url })),
+    }));
+
+    let blob: Blob;
+    let filename: string;
+
+    if (format === 'json') {
+      blob = new Blob([JSON.stringify(dataWithFiles, null, 2)], { type: 'application/json' });
+      filename = `tracker-${today}.json`;
+    } else {
+      const cols = ['id','client','university','course','title_en','title_ar','type','type_ar','deadline','priority','status','price','payment','claude','fatora','fatora_link','notes','instructions','created_at','updated_at','files'] as const;
+      const escape = (v: unknown) => {
+        if (v === null || v === undefined) return '';
+        const s = Array.isArray(v) ? v.map((f: { url: string }) => f.url).join(' | ') : String(v);
+        return /[,"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const rows = dataWithFiles.map(t => cols.map(c => escape((t as Record<string, unknown>)[c])).join(','));
+      const csv = [cols.join(','), ...rows].join('\n');
+      blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      filename = `tracker-${today}.csv`;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const overdueCount = tasks.filter(x => x.status !== 'done' && x.status !== 'cancel' && daysUntil(x.deadline) < 0).length;
   const openTask = tasks.find(t => t.id === openId);
   const t = T[lang];
@@ -273,7 +348,7 @@ export default function TrackerApp() {
   return (
     <div className="app">
       <Sidebar lang={lang} tasks={tasks} filters={filters} setFilters={setFilters} />
-      <Topbar lang={lang} tasks={filtered} />
+      <Topbar lang={lang} tasks={filtered} onRefresh={() => refresh()} refreshing={refreshing} />
 
       <main className="main">
         <Summary tasks={tasks} lang={lang} />
@@ -303,8 +378,9 @@ export default function TrackerApp() {
           view={tweak.layout} setView={v => updateTweak({ layout: v as Tweaks['layout'] })}
           onNewTask={newTask}
           onOpenPalette={() => setPaletteOpen(true)}
-          onOpenColumns={() => alert('Column manager — add custom columns (text/number/date/select/url/checkbox)')}
+          onOpenColumns={() => setSettingsOpen(true)}
           onOpenTweaks={() => setTweakOpen(o => !o)}
+          onExport={exportTasks}
         />
 
         {loading ? (
@@ -333,6 +409,8 @@ export default function TrackerApp() {
       {openTask && (
         <Drawer
           task={openTask} lang={lang}
+          claudeAccounts={claudeAccounts}
+          taskTypes={taskTypes}
           onClose={() => setOpenId(null)}
           onUpdate={updateTask} onDelete={deleteTask}
         />
@@ -349,6 +427,15 @@ export default function TrackerApp() {
           onOpen={setOpenId}
           onNewTask={newTask}
           setFilters={setFilters}
+        />
+      )}
+
+      {settingsOpen && (
+        <SettingsPanel
+          items={listItems}
+          onClose={() => setSettingsOpen(false)}
+          onItemAdded={item => setListItems(prev => [...prev, item])}
+          onItemRemoved={id => setListItems(prev => prev.filter(x => x.id !== id))}
         />
       )}
 
