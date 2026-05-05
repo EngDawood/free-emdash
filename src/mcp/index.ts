@@ -7,12 +7,49 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
-import { EmDashClient } from "emdash/client";
+import { EmDashClient, portableTextToMarkdown } from "emdash/client";
 import { z } from "zod";
 
 const jsonText = (data: unknown) => ({
 	content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
 });
+
+/** Convert portableText array fields to markdown strings (duck-typed: any array whose items have _type). */
+function applyMarkdownFormat(data: Record<string, unknown>): Record<string, unknown> {
+	const result = { ...data };
+	for (const [key, value] of Object.entries(result)) {
+		if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object" && value[0] !== null && "_type" in (value[0] as object)) {
+			result[key] = portableTextToMarkdown(value as Parameters<typeof portableTextToMarkdown>[0]);
+		}
+	}
+	return result;
+}
+
+/** Regex-based HTML → Markdown (no DOM required, works in CF Workers). */
+function htmlToMarkdown(html: string): string {
+	let md = html;
+	md = md.replace(/<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, (_, c) => "```\n" + c.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim() + "\n```\n\n");
+	md = md.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, (_, c) => "# " + c.replace(/<[^>]+>/g, "").trim() + "\n\n");
+	md = md.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, c) => "## " + c.replace(/<[^>]+>/g, "").trim() + "\n\n");
+	md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, c) => "### " + c.replace(/<[^>]+>/g, "").trim() + "\n\n");
+	md = md.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, (_, c) => "#### " + c.replace(/<[^>]+>/g, "").trim() + "\n\n");
+	md = md.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, c) => "> " + c.replace(/<[^>]+>/g, "").trim() + "\n\n");
+	md = md.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**");
+	md = md.replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**");
+	md = md.replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, "_$1_");
+	md = md.replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, "_$1_");
+	md = md.replace(/<del[^>]*>([\s\S]*?)<\/del>/gi, "~~$1~~");
+	md = md.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`");
+	md = md.replace(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)");
+	md = md.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_, c) => "- " + c.replace(/<[^>]+>/g, "").trim() + "\n");
+	md = md.replace(/<\/[uo]l>/gi, "\n").replace(/<[uo]l[^>]*>/gi, "");
+	md = md.replace(/<hr[^>]*\/?>/gi, "\n---\n");
+	md = md.replace(/<br[^>]*\/?>/gi, "\n");
+	md = md.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (_, c) => c.replace(/<[^>]+>/g, "").trim() + "\n\n");
+	md = md.replace(/<[^>]+>/g, "");
+	md = md.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ");
+	return md.replace(/\n{3,}/g, "\n\n").trim();
+}
 
 interface Env extends Cloudflare.Env {
 	MCP_OBJECT: DurableObjectNamespace;
@@ -56,12 +93,16 @@ export class EmDashMCP extends McpAgent<Env> {
 				collection: z.string().describe("Collection slug: projects, posts, or pages"),
 				status: z.enum(["published", "draft", "all"]).optional().describe("Filter by status (default: all)"),
 				limit: z.number().int().min(1).max(100).optional().describe("Max entries to return (default: 50)"),
+				format: z.enum(["portableText", "markdown"]).optional().describe("Output format for rich-text fields: 'portableText' returns raw JSON blocks (default), 'markdown' converts them to readable markdown strings"),
 			},
-			async ({ collection, status, limit }) => {
+			async ({ collection, status, limit, format }) => {
 				const result = await client.list(collection, {
 					status: status === "all" ? undefined : status,
 					limit,
 				});
+				if (format === "markdown") {
+					result.items = result.items.map((item) => ({ ...item, data: applyMarkdownFormat(item.data) }));
+				}
 				return jsonText(result);
 			},
 		);
@@ -72,27 +113,38 @@ export class EmDashMCP extends McpAgent<Env> {
 			{
 				collection: z.string().describe("Collection slug: projects, posts, or pages"),
 				id: z.string().describe("Entry ID (ULID) or slug"),
+				format: z.enum(["portableText", "markdown"]).optional().describe("Output format for rich-text fields: 'portableText' returns raw JSON blocks (default), 'markdown' converts them to readable markdown strings"),
 			},
-			async ({ collection, id }) => {
+			async ({ collection, id, format }) => {
 				const item = await client.get(collection, id);
+				if (format === "markdown") {
+					return jsonText({ ...item, data: applyMarkdownFormat(item.data) });
+				}
 				return jsonText(item);
 			},
 		);
 
 		this.server.tool(
 			"create_content",
-			"Create a new entry in a collection. Auto-publishes by default.",
+			"Create a new entry in a collection. Auto-publishes by default. Rich-text (portableText) fields accept markdown strings by default; pass content_format: 'html' to send raw HTML instead.",
 			{
 				collection: z.string().describe("Collection slug: projects, posts, or pages"),
 				data: z.record(z.string(), z.unknown()).describe(
-					"Field values. For posts: title, excerpt, content (markdown string). For projects: title, client, year, summary, content (markdown string), url. Image fields accept a media ID from upload_media_from_url.",
+					"Field values. For posts: title, excerpt, content (markdown string). For projects: title, client, year, summary, content (markdown string), url. Image fields accept a media ID from upload_media_from_url. portableText fields that receive a string are auto-converted to structured blocks.",
 				),
 				slug: z.string().optional().describe("URL slug — use this to set a custom path (e.g. 'my-post'). Auto-generated from title if omitted."),
 				draft: z.boolean().optional().describe("Save as draft instead of publishing (default: false)"),
+				content_format: z.enum(["markdown", "html"]).optional().describe("Input format for string-valued rich-text fields: 'markdown' (default) or 'html'. Use 'html' when passing raw HTML with dir attributes for Arabic/mixed-direction content."),
 			},
-			async ({ collection, data, slug, draft }) => {
+			async ({ collection, data, slug, draft, content_format }) => {
+				let processedData = data;
+				if (content_format === "html") {
+					processedData = Object.fromEntries(
+						Object.entries(data).map(([k, v]) => [k, typeof v === "string" ? htmlToMarkdown(v) : v]),
+					);
+				}
 				const item = await client.create(collection, {
-					data,
+					data: processedData,
 					slug,
 					status: draft ? "draft" : "published",
 				});
@@ -102,17 +154,24 @@ export class EmDashMCP extends McpAgent<Env> {
 
 		this.server.tool(
 			"update_content",
-			"Update an existing entry. Fetch the entry first with get_content to get its _rev token.",
+			"Update an existing entry. Fetch the entry first with get_content to get its _rev token. Rich-text (portableText) fields accept markdown strings by default; pass content_format: 'html' to send raw HTML instead.",
 			{
 				collection: z.string().describe("Collection slug: projects, posts, or pages"),
 				id: z.string().describe("Entry ID"),
-				data: z.record(z.string(), z.unknown()).describe("Fields to update (only include changed fields)"),
+				data: z.record(z.string(), z.unknown()).describe("Fields to update (only include changed fields). portableText fields that receive a string are auto-converted to structured blocks."),
 				rev: z.string().optional().describe("Revision token from get_content (prevents overwriting concurrent edits)"),
 				draft: z.boolean().optional().describe("Save as draft instead of publishing (default: false)"),
+				content_format: z.enum(["markdown", "html"]).optional().describe("Input format for string-valued rich-text fields: 'markdown' (default) or 'html'. Use 'html' when passing raw HTML with dir attributes for Arabic/mixed-direction content."),
 			},
-			async ({ collection, id, data, rev, draft }) => {
+			async ({ collection, id, data, rev, draft, content_format }) => {
+				let processedData = data;
+				if (content_format === "html") {
+					processedData = Object.fromEntries(
+						Object.entries(data).map(([k, v]) => [k, typeof v === "string" ? htmlToMarkdown(v) : v]),
+					);
+				}
 				const item = await client.update(collection, id, {
-					data,
+					data: processedData,
 					_rev: rev,
 					status: draft ? "draft" : "published",
 				});
