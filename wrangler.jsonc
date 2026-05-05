@@ -22,14 +22,6 @@
 		{
 			"pattern": "www.engdawood.com",
 			"custom_domain": true
-		},
-		{
-			"pattern": "wp.engdawood.com",
-			"custom_domain": true
-		},
-		{
-			"pattern": "www.wp.engdawood.com",
-			"custom_domain": true
 		}
 	],
 	"r2_buckets": [

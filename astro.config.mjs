@@ -55,4 +55,19 @@ export default defineConfig({
 		}),
 	],
 	devToolbar: { enabled: false },
+	vite: {
+		optimizeDeps: {
+			include: [
+				"emdash/middleware",
+				"emdash/middleware/redirect",
+				"emdash/middleware/setup",
+				"emdash/middleware/auth",
+				"emdash/middleware/request-context",
+				"@emdash-cms/cloudflare/db/d1",
+				"emdash/media/local-runtime",
+				"@emdash-cms/plugin-forms",
+				"@emdash-cms/cloudflare/storage/r2"
+			],
+		},
+	},
 });
