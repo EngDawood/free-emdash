@@ -117,7 +117,7 @@ const articleSchema =
 			crossorigin
 		/>
 		<link
-			href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..700&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=JetBrains+Mono:wght@400&family=Amiri:wght@400;700&display=swap"
 			rel="stylesheet"
 		/>
 		<link
@@ -144,8 +144,24 @@ const articleSchema =
 		<EmDashBodyStart page={pageCtx} />
 		<header class="site-header">
 			<nav class="nav">
-				<a href={`/${locale}`} class="site-title">{siteTitle}</a>
+				<a href={`/${locale}`} class="site-logo" aria-label="Home">
+					<svg width="44" height="34" viewBox="0 0 44 34" class="logo-mark" aria-hidden="true">
+						<text x="0" y="30" font-family="'Playfair Display', serif" font-size="40" font-weight="400" fill="var(--color-text)" letter-spacing="-0.06em">D</text>
+						<text x="17" y="30" font-family="'Playfair Display', serif" font-size="40" font-weight="400" font-style="italic" fill="var(--color-accent)" letter-spacing="-0.06em">s</text>
+						<circle cx="40" cy="29" r="1.6" fill="var(--color-accent)" />
+					</svg>
+					<div class="logo-wordmark">
+						<span class="logo-name">Dawood Saleh</span>
+						<span class="logo-sub">Software Engineer</span>
+					</div>
+				</a>
 				<div class="nav-right">
+					<div class="nav-links">
+						<a href={`/${locale}/work`}>{t("nav.projects", locale)}</a>
+						<a href={`/${locale}/posts`}>{t("nav.blog", locale)}</a>
+						<a href={`/${locale}#about`}>{t("nav.about", locale)}</a>
+						<a href={`/${locale}#contact`}>{t("nav.contact", locale)}</a>
+					</div>
 					<LiveSearch
 						placeholder="Search..."
 						class="site-search"
@@ -154,21 +170,14 @@ const articleSchema =
 						resultClass="site-search-result"
 						collections={["projects", "posts", "pages"]}
 					/>
-					<div class="nav-links">
-						<a href={`/${locale}/work`}>{t("nav.projects", locale)}</a>
-						<span class="nav-divider" aria-hidden="true">/</span>
-						<a href={`/${locale}/posts`}>{t("nav.blog", locale)}</a>
-						<a href={`/${locale}#about`}>{t("nav.about", locale)}</a>
-						<a href={`/${locale}#contact`}>{t("nav.contact", locale)}</a>
-					</div>
 					<button
 						type="button"
 						id="theme-toggle"
 						class="theme-toggle-btn"
 						aria-label="Toggle dark mode"
 					>
-						<svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-						<svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+						<svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+						<svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
 					</button>
 					<LanguageSwitcher locale={locale} />
 					{isLoggedIn && <a href="/tracker" class="nav-admin">Tracker</a>}
@@ -189,8 +198,17 @@ const articleSchema =
 			<div class="footer-inner">
 				<div class="footer-grid">
 					<div class="footer-brand">
-						<a href={`/${locale}`} class="footer-logo">{siteTitle}</a>
-						<p class="footer-tagline">{siteDescription}</p>
+						<a href={`/${locale}`} class="footer-logo-wrap">
+							<svg width="52" height="40" viewBox="0 0 52 40" class="footer-logo-mark" aria-hidden="true">
+								<text x="0" y="35" font-family="'Playfair Display', serif" font-size="46" font-weight="400" fill="var(--color-text)" letter-spacing="-0.06em">D</text>
+								<text x="19" y="35" font-family="'Playfair Display', serif" font-size="46" font-weight="400" font-style="italic" fill="var(--color-accent)" letter-spacing="-0.06em">s</text>
+								<circle cx="47" cy="33" r="1.8" fill="var(--color-accent)" />
+							</svg>
+							<div class="footer-logo-text">
+								<span class="footer-logo-name">{siteTitle}</span>
+								<span class="footer-logo-sub">{t("footer.tagline", locale)}</span>
+							</div>
+						</a>
 					</div>
 					<div class="footer-nav">
 						<h4 class="footer-heading">{t("footer.nav", locale)}</h4>
@@ -345,20 +363,20 @@ const articleSchema =
 			}
 
 			:root {
-				/* Colors - Elegant/Minimal palette */
-				--color-bg: #fafafa;
-				--color-bg-subtle: #f5f5f5;
-				--color-text: #1a1a1a;
-				--color-text-secondary: #4b5563;
-				--color-muted: #6b7280;
-				--color-border: #e5e7eb;
-				--color-border-subtle: #f3f4f6;
-				--color-surface: #ffffff;
-				--color-accent: #7c3aed;
-				--color-accent-hover: #6d28d9;
-				--color-accent-muted: #a78bfa;
-				--color-on-accent: #ffffff;
-				--color-accent-ring: color-mix(in srgb, var(--color-accent) 25%, transparent);
+				/* Colors - Editorial warm palette */
+				--color-bg: #f8f5ef;
+				--color-bg-subtle: #f2ede3;
+				--color-text: #16130e;
+				--color-text-secondary: #4a4438;
+				--color-muted: #8a8374;
+				--color-border: #d9d2c3;
+				--color-border-subtle: #ede7d8;
+				--color-surface: #fdfbf6;
+				--color-accent: #6b1438;
+				--color-accent-hover: #4a0d26;
+				--color-accent-muted: #a0364e;
+				--color-on-accent: #fdfbf6;
+				--color-accent-ring: color-mix(in srgb, var(--color-accent) 20%, transparent);
 
 				/* EmDash search theming */
 				--emdash-search-bg: var(--color-bg);
@@ -372,7 +390,7 @@ const articleSchema =
 				--font-serif: "Playfair Display", Georgia, serif;
 				--font-sans: system-ui, -apple-system, sans-serif;
 				--font-arabic: "Al Jazeera", "Segoe UI", Tahoma, sans-serif;
-				--font-mono: ui-monospace, monospace;
+				--font-mono: "JetBrains Mono", ui-monospace, monospace;
 
 				--font-size-xs: 0.75rem;
 				--font-size-sm: 0.875rem;
@@ -455,33 +473,33 @@ const articleSchema =
 			/* Dark mode via system preference (when no explicit class) */
 			@media (prefers-color-scheme: dark) {
 				:root:not(.light) {
-					--color-bg: #0a0a0a;
-					--color-bg-subtle: #141414;
-					--color-text: #f5f5f5;
-					--color-text-secondary: #a1a1aa;
-					--color-muted: #71717a;
-					--color-border: #27272a;
-					--color-border-subtle: #1f1f1f;
-					--color-surface: #18181b;
-					--color-accent: #a78bfa;
-					--color-accent-hover: #c4b5fd;
-					--color-accent-muted: #7c3aed;
+					--color-bg: #0e0d0b;
+					--color-bg-subtle: #141210;
+					--color-text: #f4efe3;
+					--color-text-secondary: #a89e8c;
+					--color-muted: #80796a;
+					--color-border: #2a2721;
+					--color-border-subtle: #231f1a;
+					--color-surface: #18130e;
+					--color-accent: #9b2346;
+					--color-accent-hover: #b8284f;
+					--color-accent-muted: #6b1438;
 				}
 			}
 
 			/* Explicit dark mode */
 			:root.dark {
-				--color-bg: #0a0a0a;
-				--color-bg-subtle: #141414;
-				--color-text: #f5f5f5;
-				--color-text-secondary: #a1a1aa;
-				--color-muted: #71717a;
-				--color-border: #27272a;
-				--color-border-subtle: #1f1f1f;
-				--color-surface: #18181b;
-				--color-accent: #a78bfa;
-				--color-accent-hover: #c4b5fd;
-				--color-accent-muted: #7c3aed;
+				--color-bg: #0e0d0b;
+				--color-bg-subtle: #141210;
+				--color-text: #f4efe3;
+				--color-text-secondary: #a89e8c;
+				--color-muted: #80796a;
+				--color-border: #2a2721;
+				--color-border-subtle: #231f1a;
+				--color-surface: #18130e;
+				--color-accent: #9b2346;
+				--color-accent-hover: #b8284f;
+				--color-accent-muted: #6b1438;
 			}
 
 			html {
@@ -581,13 +599,39 @@ const articleSchema =
 				height: var(--nav-height);
 			}
 
-			.site-title {
-				font-family: var(--font-serif);
-				font-size: var(--font-size-lg);
-				font-weight: 600;
+			.site-logo {
+				display: flex;
+				align-items: center;
+				gap: 12px;
 				text-decoration: none;
-				letter-spacing: -0.02em;
+				flex-shrink: 0;
+			}
+
+			.logo-mark {
+				display: block;
+				overflow: visible;
+			}
+
+			.logo-wordmark {
+				display: flex;
+				flex-direction: column;
+				gap: 1px;
+				line-height: 1.1;
+			}
+
+			.logo-name {
+				font-family: var(--font-serif);
+				font-size: 17px;
+				font-weight: 500;
 				color: var(--color-text);
+				letter-spacing: -0.02em;
+			}
+
+			.logo-sub {
+				font-family: var(--font-serif);
+				font-size: 11px;
+				font-style: italic;
+				color: var(--color-muted);
 			}
 
 			.nav-right {
@@ -599,7 +643,10 @@ const articleSchema =
 			.nav-links {
 				display: flex;
 				gap: var(--spacing-6);
-				font-size: var(--font-size-sm);
+				font-family: var(--font-mono);
+				font-size: 11px;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
 			}
 
 			.nav-links a {
@@ -610,11 +657,6 @@ const articleSchema =
 
 			.nav-links a:hover {
 				color: var(--color-text);
-			}
-
-			.nav-divider {
-				color: var(--color-border);
-				user-select: none;
 			}
 
 			.nav-admin {
@@ -741,17 +783,34 @@ const articleSchema =
 				max-width: 280px;
 			}
 
-			.footer-logo {
+			.footer-logo-wrap {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				text-decoration: none;
+			}
+
+			.footer-logo-mark {
+				display: block;
+				overflow: visible;
+				flex-shrink: 0;
+			}
+
+			.footer-logo-text {
+				display: flex;
+				flex-direction: column;
+				gap: 3px;
+			}
+
+			.footer-logo-name {
 				font-family: var(--font-serif);
 				font-size: var(--font-size-lg);
-				font-weight: 600;
+				font-weight: 500;
 				color: var(--color-text);
-				text-decoration: none;
 				letter-spacing: -0.02em;
 			}
 
-			.footer-tagline {
-				margin-top: var(--spacing-3);
+			.footer-logo-sub {
 				font-family: var(--font-serif);
 				font-style: italic;
 				font-size: var(--font-size-sm);

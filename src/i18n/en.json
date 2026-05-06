@@ -6,22 +6,36 @@
 	"nav": {
 		"home": "Home",
 		"about": "About",
-		"projects": "Projects",
+		"projects": "Work",
 		"skills": "Skills",
-		"blog": "Blog",
+		"blog": "Writing",
 		"contact": "Contact"
 	},
 	"hero": {
 		"firstName": "Dawood",
 		"lastName": "Saleh",
 		"available": "Available for work",
+		"location": "Sana'a, Yemen",
+		"role": "Software Engineer",
 		"subtitle": "Software engineer building serverless backends, AI tooling, and infrastructure that runs without maintenance.",
 		"stack": "Node.js · TypeScript · Cloudflare Workers · MCP",
 		"cta": "Get in touch",
-		"viewProjects": "View projects"
+		"viewProjects": "View work",
+		"metrics": {
+			"records": "research records",
+			"platforms": "platforms",
+			"years": "experience"
+		}
+	},
+	"writing": {
+		"kicker": "RECENT WRITING",
+		"heading": "From the notebook",
+		"subheading": "Essays, walkthroughs, and notes from the field.",
+		"viewAll": "Read all posts"
 	},
 	"about": {
 		"section": "About",
+		"kicker": "ABOUT",
 		"heading1": "Backend engineer.",
 		"heading2": "AI tools. No fluff.",
 		"info": {
@@ -39,6 +53,7 @@
 	},
 	"projects": {
 		"section": "Projects",
+		"kicker": "SELECTED WORK",
 		"heading": "Selected work",
 		"viewAll": "View all work",
 		"items": [
@@ -100,6 +115,7 @@
 	},
 	"footer": {
 		"copyright": "All rights reserved",
+		"tagline": "Software Engineer — Backend, AI, Serverless",
 		"nav": "Links",
 		"connect": "Connect",
 		"rss": "RSS Feed"

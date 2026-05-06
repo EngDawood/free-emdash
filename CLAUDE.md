@@ -37,6 +37,8 @@ Two locales: **`ar`** (default, RTL) and **`en`** (LTR). Default locale routes a
 
 When adding translated UI strings, add keys to both JSON files.
 
+Key i18n namespaces: `nav`, `hero` (includes `location`, `role`, `metrics`), `writing`, `projects` (includes `kicker`), `about` (includes `kicker`), `skills`, `contact`, `footer` (includes `tagline`).
+
 ### EmDash CMS Integration
 
 Content lives in a Cloudflare D1 database, managed by EmDash. Collections are declared in `src/live.config.ts` via a single `_emdash` live collection. Pages use `getEmDashCollection()` and `getEmDashEntry()` from `emdash` to fetch content at request time.
@@ -55,9 +57,17 @@ Key EmDash bindings (declared in `wrangler.jsonc`):
 
 `src/plugins/email-worker.ts` is a sandboxed Worker entrypoint registered as the `email:provide` capability via the `email-resend-provider` plugin in `astro.config.mjs`. Plugin sandboxing is handled by `@emdash-cms/cloudflare/sandbox` (`PluginBridge` exported from `worker.ts`).
 
+### Design System
+
+The site uses a warm editorial palette (oxblood `#6b1438` accent, bone `#f8f5ef` background). Fonts: **Playfair Display** (serif headings), **JetBrains Mono** (kickers/metadata), **Al Jazeera** (Arabic body), **Amiri** (Arabic display/hero). CSS variables are in `src/layouts/Base.astro` under `:root`.
+
+Homepage sections follow an editorial numbered structure: Hero (bilingual lockup + ticker), §01 Work (project rows), §02 Writing (magazine grid), §03 About (with skills matrix), §04 Contact.
+
 ### Base Layout
 
 `src/layouts/Base.astro` is the root layout. It fetches site settings, primary menu, and pages from EmDash on every request. It uses EmDash UI primitives (`EmDashHead`, `EmDashBodyStart`, `EmDashBodyEnd`, `WidgetArea`) alongside custom components.
+
+Header uses an Editorial Monogram mark (`Ds·` SVG) + wordmark. Footer includes the same mark with tagline.
 
 ## Environment Variables
 
@@ -65,6 +75,18 @@ Local dev uses `.dev.vars` (not committed). Required vars:
 - `EMDASH_TOKEN` — Bearer token for MCP endpoint auth
 - `EMDASH_URL` — (optional) override base URL for EmDashClient (defaults to `https://engdawood.com`)
 
+
+## Reference Files (`.claude/`)
+
+Detailed subsystem docs live in `.claude/`. Claude Code loads these on-demand via `@` references:
+
+| File | Contents |
+|------|----------|
+| `.claude/CLAUDE.md` | Behavioral guidelines (think-before-coding, simplicity, surgical changes) |
+| `.claude/CLAUDE.EMDASH.md` | EmDash CMS — collections, plugins, patches, page structure, common gotchas |
+| `.claude/CLAUDE.CLOUDFLARE.md` | Cloudflare / Wrangler — dual-config setup, sandbox behavior, adapter gotchas |
+| `.claude/CLAUDE-mcp.md` | MCP server — tool structure, runtime constraints, tool inventory, how to add tools |
+| `.claude/CLAUDE-tracker.md` | Task tracker — active work items and session history |
 
 ## EmDash CMS
 

@@ -6,22 +6,36 @@
 	"nav": {
 		"home": "الرئيسية",
 		"about": "عنّي",
-		"projects": "أعمالي",
+		"projects": "الأعمال",
 		"skills": "مهاراتي",
-		"blog": "المدونة",
+		"blog": "الكتابات",
 		"contact": "تواصل"
 	},
 	"hero": {
 		"firstName": "داوود",
 		"lastName": "صالح",
 		"available": "متاح للعمل",
+		"location": "صنعاء، اليمن",
+		"role": "مهندس برمجيات",
 		"subtitle": "أبني أنظمة خلفية وأدوات ذكاء اصطناعي",
 		"stack": "Node.js · TypeScript · Cloudflare Workers · MCP",
 		"cta": "تواصل معي",
-		"viewProjects": "شوف أعمالي"
+		"viewProjects": "شوف أعمالي",
+		"metrics": {
+			"records": "سجل علمي",
+			"platforms": "منصة",
+			"years": "خبرة"
+		}
+	},
+	"writing": {
+		"kicker": "كتاباتي",
+		"heading": "من المدونة",
+		"subheading": "مقالات وشروحات وملاحظات من الميدان.",
+		"viewAll": "اقرأ كل المقالات"
 	},
 	"about": {
 		"section": "عنّي",
+		"kicker": "عنّي",
 		"heading1": "مهندس أنظمة خلفية",
 		"heading2": "أدوات ذكاء اصطناعي بدون زيادة",
 		"info": {
@@ -39,6 +53,7 @@
 	},
 	"projects": {
 		"section": "أعمالي",
+		"kicker": "أعمال مختارة",
 		"heading": "مشاريع مختارة",
 		"viewAll": "شوف كل الأعمال",
 		"items": [
@@ -100,6 +115,7 @@
 	},
 	"footer": {
 		"copyright": "جميع الحقوق محفوظة",
+		"tagline": "مهندس برمجيات — خلفية وذكاء اصطناعي وسيرفرلس",
 		"nav": "روابط",
 		"connect": "تواصل",
 		"rss": "RSS"
