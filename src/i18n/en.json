@@ -119,5 +119,10 @@
 		"nav": "Links",
 		"connect": "Connect",
 		"rss": "RSS Feed"
+	},
+	"theme": {
+		"light": "Light",
+		"dark": "Dark",
+		"system": "System"
 	}
 }

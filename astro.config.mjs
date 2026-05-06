@@ -29,6 +29,7 @@ export default defineConfig({
 	integrations: [
 		react(),
 		emdash({
+			mcp:true ,
 			database: d1({ binding: "DB", session: "auto" }),
 			storage: r2({ binding: "MEDIA" }),
 			plugins: [
@@ -49,7 +50,7 @@ export default defineConfig({
 					adminWidgets: [{ id: "tracker-open", title: "Task Tracker", size: "third" }],
 				},
 			],
-			sandboxed: [webhookNotifierPlugin()],
+			sandboxed: process.env.NODE_ENV !== "production" ? [webhookNotifierPlugin()] : [],
 			sandboxRunner: sandbox(),
 			marketplace: "https://marketplace.emdashcms.com",
 		}),
@@ -66,7 +67,11 @@ export default defineConfig({
 				"@emdash-cms/cloudflare/db/d1",
 				"emdash/media/local-runtime",
 				"@emdash-cms/plugin-forms",
-				"@emdash-cms/cloudflare/storage/r2"
+				"@emdash-cms/cloudflare/storage/r2",
+				"emdash/ui",
+				"@emdash-cms/plugin-forms/astro",
+				"astro/zod",
+				"emdash/runtime"
 			],
 		},
 	},
