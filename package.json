@@ -36,17 +36,5 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "wrangler": "^4.81.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "esbuild",
-      "sharp",
-      "workerd"
-    ],
-    "patchedDependencies": {
-      "@emdash-cms/auth@0.1.1": "patches/@emdash-cms__auth@0.1.1.patch",
-      "emdash@0.1.1": "patches/emdash@0.1.1.patch"
-    }
   }
 }
