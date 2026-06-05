@@ -39,3 +39,6 @@ public/fonts/*
 .temp/*
 my-website/*
 temp/*
+.claude\channels/*
+.claude\worktrees/*
+.claude\settings.local.json
