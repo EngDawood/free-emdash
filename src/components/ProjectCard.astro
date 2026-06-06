@@ -1,6 +1,7 @@
 ---
 import type { MediaValue } from "emdash";
 import { Image } from "emdash/ui";
+import { t, type Locale, defaultLocale } from "../i18n/utils";
 
 interface Props {
 	title: string;
@@ -11,9 +12,10 @@ interface Props {
 	year?: string;
 	categories?: string[];
 	tags?: string[];
+	locale?: Locale;
 }
 
-const { title, summary, featuredImage, href, client, year, categories, tags } =
+const { title, summary, featuredImage, href, client, year, categories, tags, locale = defaultLocale } =
 	Astro.props;
 // Combine categories and tags for display
 const allTags = [...(categories || []), ...(tags || [])];
@@ -24,7 +26,7 @@ const allTags = [...(categories || []), ...(tags || [])];
 		<div class="card-image">
 			<Image image={featuredImage} />
 			<div class="card-overlay">
-				<span class="card-view">View Project</span>
+				<span class="card-view">{t("project.viewWork", locale)}</span>
 			</div>
 		</div>
 		<div class="card-content">

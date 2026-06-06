@@ -146,7 +146,7 @@ const articleSchema =
 					</svg>
 					<div class="logo-wordmark">
 						<span class="logo-name">Dawood Saleh</span>
-						<span class="logo-sub">Software Engineer</span>
+						<span class="logo-sub">{t("hero.role", locale)}</span>
 					</div>
 				</a>
 				<div class="nav-right">
@@ -157,7 +157,7 @@ const articleSchema =
 						<a href={`/${locale}#contact`}>{t("nav.contact", locale)}</a>
 					</div>
 					<LiveSearch
-						placeholder="Search..."
+						placeholder={t("search.placeholder", locale)}
 						class="site-search"
 						inputClass="site-search-input"
 						resultsClass="site-search-results"
@@ -229,12 +229,17 @@ const articleSchema =
 						</ul>
 					</div>
 					<div class="footer-widgets-section">
-						<WidgetArea name="footer" />
+						<div class="footer-widget">
+							<h4 class="footer-heading">{t("footer.aboutHeading", locale)}</h4>
+							<p class="footer-about-text" style="color: var(--color-text-secondary); font-size: var(--font-size-sm); line-height: var(--leading-relaxed);">
+								{t("footer.aboutText", locale)}
+							</p>
+						</div>
 					</div>
 				</div>
 				<div class="footer-bottom">
 					<p class="footer-copyright">
-						&copy; {new Date().getFullYear()}
+						&copy; {new Date().getFullYear()} {t("footer.copyright", locale)}
 					</p>
 					<div class="theme-switcher">
 						<button

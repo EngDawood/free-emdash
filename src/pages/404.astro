@@ -1,15 +1,18 @@
 ---
 import Base from "../layouts/Base.astro";
+import { getLocaleFromPath, t } from "../i18n/utils";
+
+const locale = getLocaleFromPath(Astro.url.pathname);
 ---
 
-<Base title="Page not found">
+<Base title={t("notFound.title", locale)} locale={locale}>
 	<div class="not-found">
 		<span class="not-found-code">404</span>
-		<h1>Page not found</h1>
-		<p>The page you're looking for doesn't exist or has been moved.</p>
+		<h1>{t("notFound.title", locale)}</h1>
+		<p>{t("notFound.subtitle", locale)}</p>
 		<div class="not-found-links">
-			<a href="/" class="link-primary">Go home</a>
-			<a href="/work" class="link-secondary">View our work</a>
+			<a href={`/${locale}`} class="link-primary">{t("notFound.goHome", locale)}</a>
+			<a href={`/${locale}/work`} class="link-secondary">{t("notFound.viewWork", locale)}</a>
 		</div>
 	</div>
 </Base>
