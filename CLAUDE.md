@@ -68,7 +68,7 @@ Auth: `?token=<ec_pat_*>` query param OR `Authorization: Bearer <token>` header.
 
 ### Design System
 
-The site uses a warm editorial palette (oxblood `#6b1438` accent, bone `#f8f5ef` background). Fonts: **Playfair Display** (serif headings), **JetBrains Mono** (kickers/metadata), **Al Jazeera** (Arabic body), **Amiri** (Arabic display/hero). CSS variables are in `src/layouts/Base.astro` under `:root`.
+The site uses a warm editorial palette (oxblood `#6b1438` accent, bone `#f8f5ef` background). Fonts: **Playfair Display** (Latin serif headings), **JetBrains Mono** (kickers/metadata), **Thmanyah** Serif Text / Serif Display / Sans (Arabic body + headings, self-hosted from `cdn.engdawood.com`), **Amiri** (Arabic hero lockup), with **Al Jazeera** / **Cairo** as fallbacks. CSS variables (incl. `--font-arabic`, `--font-arabic-heading`, `--font-arabic-sans`) are in `src/layouts/Base.astro` under `:root`. The Thmanyah fonts load cross-origin and depend on a CORS policy on the `cdn-assets` R2 bucket — see @.claude/CLAUDE.CLOUDFLARE.md.
 
 Homepage sections follow an editorial numbered structure: Hero (bilingual lockup + ticker), §01 Work (project rows), §02 Writing (magazine grid), §03 About (with skills matrix), §04 Contact.
 
