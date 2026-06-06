@@ -15,9 +15,11 @@ if (!locales.includes(localeParam as Locale)) {
 	return Astro.redirect(`/${defaultLocale}/`, 302);
 }
 
-const settings = await getSiteSettings();
-const { entries: projects, cacheHint } = await getEmDashCollection("projects");
-const { entries: posts } = await getEmDashCollection("posts");
+const [settings, { entries: projects, cacheHint }, { entries: posts }] = await Promise.all([
+	getSiteSettings(),
+	getEmDashCollection("projects"),
+	getEmDashCollection("posts"),
+]);
 Astro.cache.set(cacheHint);
 
 // Get the 3 most recent projects for the homepage

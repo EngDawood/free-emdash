@@ -40,13 +40,14 @@ const {
 const locale: Locale = localeProp || getLocaleFromPath(Astro.url.pathname) || defaultLocale;
 const dir = getDir(locale);
 const isRTL = dir === "rtl";
-const settings = await getSiteSettings();
+const [settings, _menu, { entries: pages }] = await Promise.all([
+	getSiteSettings(),
+	getMenu("primary"),
+	getEmDashCollection("pages"),
+]);
 const siteTitle = settings?.title || "Studio";
 const siteDescription = settings?.tagline || "Design & Development";
 const fullTitle = title ? `${title} — ${siteTitle}` : siteTitle;
-
-const _menu = await getMenu("primary"); // Reserved for future navigation
-const { entries: pages } = await getEmDashCollection("pages");
 
 const isLoggedIn = !!Astro.locals.user;
 
@@ -113,7 +114,15 @@ const articleSchema =
 		<link
 			href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=JetBrains+Mono:wght@400&family=Amiri:wght@400;700&family=Cairo:wght@400;500;600&display=swap"
 			rel="stylesheet"
+			media="print"
+			onload="this.media='all'"
 		/>
+		<noscript>
+			<link
+				href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=JetBrains+Mono:wght@400&family=Amiri:wght@400;700&family=Cairo:wght@400;500;600&display=swap"
+				rel="stylesheet"
+			/>
+		</noscript>
 		<link
 			rel="alternate"
 			type="application/rss+xml"

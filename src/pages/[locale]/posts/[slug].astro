@@ -36,9 +36,6 @@ if (!post) {
 
 Astro.cache.set(cacheHint);
 
-const settings = await getSiteSettings();
-const siteTitle = settings?.title || "Studio";
-
 function getImageUrl(img: unknown): string | undefined {
 	if (!img || typeof img !== "object") return undefined;
 	const image = img as Record<string, unknown>;
@@ -56,6 +53,13 @@ function getImageUrl(img: unknown): string | undefined {
 	}
 	return undefined;
 }
+
+const [settings, tags, { entries: recentPosts }] = await Promise.all([
+	getSiteSettings(),
+	getEntryTerms("posts", post.data.id, "tag"),
+	getEmDashCollection("posts", { locale, orderBy: { published_at: "desc" }, limit: 4 }),
+]);
+const siteTitle = settings?.title || "Studio";
 const featuredImageUrl = getImageUrl(post.data.featured_image);
 
 const seo = getSeoMeta(post, {
@@ -65,15 +69,8 @@ const seo = getSeoMeta(post, {
 	defaultOgImage: featuredImageUrl,
 });
 
-const tags = await getEntryTerms("posts", post.data.id, "tag");
 const bylines = post.data.bylines ?? [];
 const readingTime = getReadingTime(post.data.content);
-
-const { entries: recentPosts } = await getEmDashCollection("posts", {
-	locale,
-	orderBy: { published_at: "desc" },
-	limit: 4,
-});
 const otherPosts = recentPosts.filter((p) => p.id !== post.id).slice(0, 3);
 
 const otherPostsWithTags = await Promise.all(
