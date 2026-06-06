@@ -12,8 +12,3 @@ jobs:
         uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: moderate
-
-          # Use comma-separated names to pass list arguments:
-          deny-licenses: LGPL-2.0, BSD-2-Clause
-          allow-dependencies-licenses: "pkg:npm/@myorg/mypackage, pkg:npm/packagename, pkg:githubactions/owner/repo@2.0.0"
-          
