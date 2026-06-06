@@ -9,9 +9,9 @@ patchedDependencies:
     hash: 7d6f2af3d578b656b3465402da1d26ed622884d70bbb4cbed2e62f5cfe1f8528
     path: patches/@emdash-cms__auth@0.1.1.patch
   emdash@0.1.1:
-    hash: 8ec754bc94cf9c31c7dfb096f1ba3cf62cda189615a942b4fbf255df906529bc
+    hash: 4d4e020b8e662d2b4f95961acd2969ddce6b7583137b83a0c61cdc19ebec3f59
     path: patches/emdash@0.1.1.patch
- 
+
 importers:
 
   .:
@@ -30,7 +30,7 @@ importers:
         version: 0.1.1(0ba5f59725d8ae9f637d4e0715074a2b)
       '@emdash-cms/plugin-forms':
         specifier: 0.1.1
-        version: 0.1.1(@cloudflare/kumo@1.18.0(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/react@19.2.14)(echarts@6.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6))(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(astro@6.1.5(@types/node@25.6.0)(rollup@4.60.1)(typescript@5.9.3)(yaml@2.8.3))(emdash@0.1.1(patch_hash=8ec754bc94cf9c31c7dfb096f1ba3cf62cda189615a942b4fbf255df906529bc)(b37966468cba9a955b7cb0f774e6c2f8))(react@19.2.5)
+        version: 0.1.1(@cloudflare/kumo@1.18.0(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/react@19.2.14)(echarts@6.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6))(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(astro@6.1.5(@types/node@25.6.0)(rollup@4.60.1)(typescript@5.9.3)(yaml@2.8.3))(emdash@0.1.1(patch_hash=4d4e020b8e662d2b4f95961acd2969ddce6b7583137b83a0c61cdc19ebec3f59)(b37966468cba9a955b7cb0f774e6c2f8))(react@19.2.5)
       '@emdash-cms/plugin-webhook-notifier':
         specifier: 0.1.1
         version: 0.1.1(b37966468cba9a955b7cb0f774e6c2f8)
@@ -42,7 +42,7 @@ importers:
         version: 6.1.5(@types/node@25.6.0)(rollup@4.60.1)(typescript@5.9.3)(yaml@2.8.3)
       emdash:
         specifier: 0.1.1
-        version: 0.1.1(patch_hash=8ec754bc94cf9c31c7dfb096f1ba3cf62cda189615a942b4fbf255df906529bc)(b37966468cba9a955b7cb0f774e6c2f8)
+        version: 0.1.1(patch_hash=4d4e020b8e662d2b4f95961acd2969ddce6b7583137b83a0c61cdc19ebec3f59)(b37966468cba9a955b7cb0f774e6c2f8)
       react:
         specifier: ^19.2.4
         version: 19.2.5
@@ -4570,7 +4570,7 @@ snapshots:
     dependencies:
       '@cloudflare/workers-types': 4.20260410.1
       astro: 6.1.5(@types/node@25.6.0)(rollup@4.60.1)(typescript@5.9.3)(yaml@2.8.3)
-      emdash: 0.1.1(patch_hash=8ec754bc94cf9c31c7dfb096f1ba3cf62cda189615a942b4fbf255df906529bc)(b37966468cba9a955b7cb0f774e6c2f8)
+      emdash: 0.1.1(patch_hash=4d4e020b8e662d2b4f95961acd2969ddce6b7583137b83a0c61cdc19ebec3f59)(b37966468cba9a955b7cb0f774e6c2f8)
       jose: 6.2.2
       kysely: 0.27.6
       kysely-d1: 0.4.0(kysely@0.27.6)
@@ -4601,18 +4601,18 @@ snapshots:
       '@wordpress/block-serialization-default-parser': 5.43.0
       parse5: 7.3.0
 
-  '@emdash-cms/plugin-forms@0.1.1(@cloudflare/kumo@1.18.0(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/react@19.2.14)(echarts@6.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6))(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(astro@6.1.5(@types/node@25.6.0)(rollup@4.60.1)(typescript@5.9.3)(yaml@2.8.3))(emdash@0.1.1(patch_hash=8ec754bc94cf9c31c7dfb096f1ba3cf62cda189615a942b4fbf255df906529bc)(b37966468cba9a955b7cb0f774e6c2f8))(react@19.2.5)':
+  '@emdash-cms/plugin-forms@0.1.1(@cloudflare/kumo@1.18.0(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/react@19.2.14)(echarts@6.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6))(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(astro@6.1.5(@types/node@25.6.0)(rollup@4.60.1)(typescript@5.9.3)(yaml@2.8.3))(emdash@0.1.1(patch_hash=4d4e020b8e662d2b4f95961acd2969ddce6b7583137b83a0c61cdc19ebec3f59)(b37966468cba9a955b7cb0f774e6c2f8))(react@19.2.5)':
     dependencies:
       '@cloudflare/kumo': 1.18.0(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/react@19.2.14)(echarts@6.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6)
       '@phosphor-icons/react': 2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       astro: 6.1.5(@types/node@25.6.0)(rollup@4.60.1)(typescript@5.9.3)(yaml@2.8.3)
-      emdash: 0.1.1(patch_hash=8ec754bc94cf9c31c7dfb096f1ba3cf62cda189615a942b4fbf255df906529bc)(b37966468cba9a955b7cb0f774e6c2f8)
+      emdash: 0.1.1(patch_hash=4d4e020b8e662d2b4f95961acd2969ddce6b7583137b83a0c61cdc19ebec3f59)(b37966468cba9a955b7cb0f774e6c2f8)
       react: 19.2.5
       ulidx: 2.4.1
 
   '@emdash-cms/plugin-webhook-notifier@0.1.1(b37966468cba9a955b7cb0f774e6c2f8)':
     dependencies:
-      emdash: 0.1.1(patch_hash=8ec754bc94cf9c31c7dfb096f1ba3cf62cda189615a942b4fbf255df906529bc)(b37966468cba9a955b7cb0f774e6c2f8)
+      emdash: 0.1.1(patch_hash=4d4e020b8e662d2b4f95961acd2969ddce6b7583137b83a0c61cdc19ebec3f59)(b37966468cba9a955b7cb0f774e6c2f8)
     transitivePeerDependencies:
       - '@astrojs/react'
       - '@cfworker/json-schema'
@@ -6248,7 +6248,7 @@ snapshots:
 
   electron-to-chromium@1.5.334: {}
 
-  emdash@0.1.1(patch_hash=8ec754bc94cf9c31c7dfb096f1ba3cf62cda189615a942b4fbf255df906529bc)(b37966468cba9a955b7cb0f774e6c2f8):
+  emdash@0.1.1(patch_hash=4d4e020b8e662d2b4f95961acd2969ddce6b7583137b83a0c61cdc19ebec3f59)(b37966468cba9a955b7cb0f774e6c2f8):
     dependencies:
       '@astrojs/react': 5.0.3(@types/node@25.6.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(yaml@2.8.3)
       '@emdash-cms/admin': 0.1.1(@floating-ui/dom@1.7.6)(@tiptap/extension-collaboration@3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3)(@tiptap/y-tiptap@3.0.3(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.7(yjs@13.6.30))(yjs@13.6.30))(yjs@13.6.30))(@tiptap/extensions@3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3))(@tiptap/y-tiptap@3.0.3(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.7(yjs@13.6.30))(yjs@13.6.30))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(echarts@6.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6)
