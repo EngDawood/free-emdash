@@ -43,13 +43,20 @@ const formatDate = (date: Date) =>
 <Base title={t("nav.blog", locale)} description={locale === "ar" ? "مقالات عن البرمجة والذكاء الاصطناعي" : "Writing on development, AI, and building"} locale={locale}>
 	<div class="posts-page">
 		<header class="page-header">
-			<h1 class="page-title">{t("nav.blog", locale)}</h1>
-			<p class="page-description">
-				{posts.length}
-				{locale === "ar"
-					? (posts.length === 1 ? "مقال" : "مقالات")
-					: (posts.length === 1 ? "article" : "articles")}
-			</p>
+			<div class="page-header-text">
+				<h1 class="page-title">{t("nav.blog", locale)}</h1>
+				<p class="page-description">
+					{posts.length}
+					{locale === "ar"
+						? (posts.length === 1 ? "مقال" : "مقالات")
+						: (posts.length === 1 ? "article" : "articles")}
+				</p>
+			</div>
+			<a href="/rss/posts.xml" class="rss-link" title={t("footer.rss", locale)} aria-label={t("footer.rss", locale)}>
+				<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+					<path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/>
+				</svg>
+			</a>
 		</header>
 
 		{
@@ -124,7 +131,36 @@ const formatDate = (date: Date) =>
 	}
 
 	.page-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--spacing-4);
 		margin-bottom: var(--spacing-12);
+	}
+
+	.page-header-text {
+		flex: 1;
+	}
+
+	.rss-link {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		color: var(--color-muted);
+		transition: color var(--transition-fast);
+		flex-shrink: 0;
+		margin-top: 0.35rem;
+	}
+
+	.rss-link:hover {
+		color: var(--color-accent);
+	}
+
+	.rss-link svg {
+		width: 1.25rem;
+		height: 1.25rem;
 	}
 
 	.page-title {
