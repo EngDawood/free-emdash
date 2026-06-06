@@ -2,13 +2,23 @@
 export const prerender = false;
 
 import { getEmDashCollection } from "emdash";
-import Base from "../layouts/Base.astro";
-import PostCard from "../components/PostCard.astro";
-import { getReadingTime, extractText } from "../utils/reading-time";
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getReadingTime, extractText } from "../../utils/reading-time";
+import { t, locales, type Locale, defaultLocale } from "../../i18n/utils";
+
+const { locale: localeParam } = Astro.params;
+const locale: Locale = locales.includes(localeParam as Locale)
+	? (localeParam as Locale)
+	: defaultLocale;
+
+if (!locales.includes(localeParam as Locale)) {
+	return Astro.redirect(`/${defaultLocale}/search${Astro.url.search}`, 302);
+}
 
 const query = Astro.url.searchParams.get("q")?.trim() || "";
 
-const { entries: allPosts } = await getEmDashCollection("posts");
+const { entries: allPosts } = await getEmDashCollection("posts", { locale });
 
 function matchesQuery(post: (typeof allPosts)[0], q: string): boolean {
 	if (!q) return false;
@@ -25,30 +35,31 @@ const results = query ? allPosts.filter((p) => matchesQuery(p, query)) : [];
 ---
 
 <Base
-	title={query ? `Search: ${query}` : "Search"}
-	description="Search blog posts"
+	title={query ? `${t("search.title", locale)}: ${query}` : t("search.title", locale)}
+	description={t("search.description", locale)}
+	locale={locale}
 >
 	<section class="search-page">
-		<h1 class="search-title">Search</h1>
+		<h1 class="search-title">{t("search.title", locale)}</h1>
 
-		<form method="get" action="/search" class="search-form">
+		<form method="get" action={`/${locale}/search`} class="search-form">
 			<input
 				type="search"
 				name="q"
 				value={query}
-				placeholder="Search posts..."
+				placeholder={t("search.placeholder", locale)}
 				class="search-input"
 				autofocus
 			/>
-			<button type="submit" class="search-button">Search</button>
+			<button type="submit" class="search-button">{t("search.button", locale)}</button>
 		</form>
 
 		{
 			query && (
 				<p class="search-summary">
 					{results.length === 0
-						? `No results for "${query}"`
-						: `${results.length} result${results.length === 1 ? "" : "s"} for "${query}"`}
+						? `${t("search.noResults", locale)} "${query}"`
+						: `${t("search.resultsSummary", locale).replace("{count}", String(results.length))} "${query}"`}
 				</p>
 			)
 		}
@@ -61,16 +72,17 @@ const results = query ? allPosts.filter((p) => matchesQuery(p, query)) : [];
 							title={post.data.title}
 							excerpt={post.data.excerpt}
 							featuredImage={post.data.featured_image}
-							href={`/posts/${post.id}`}
+							href={`/${locale}/posts/${post.id}`}
 							date={post.data.publishedAt ?? undefined}
 							readingTime={getReadingTime(post.data.content)}
+							locale={locale}
 						/>
 					))}
 				</div>
 			)
 		}
 
-		{!query && <p class="search-hint">Enter a search term to find posts.</p>}
+		{!query && <p class="search-hint">{t("search.hint", locale)}</p>}
 	</section>
 </Base>
 

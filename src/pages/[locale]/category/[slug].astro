@@ -3,7 +3,7 @@ import { getTerm, getEmDashCollection, getEntryTerms } from "emdash";
 import Base from "../../../layouts/Base.astro";
 import PostCard from "../../../components/PostCard.astro";
 import { getReadingTime } from "../../../utils/reading-time";
-import { locales, type Locale, defaultLocale } from "../../../i18n/utils";
+import { t, locales, type Locale, defaultLocale } from "../../../i18n/utils";
 
 // Validate locale
 const { locale: localeParam, slug } = Astro.params;
@@ -18,6 +18,7 @@ if (!term) {
 }
 
 const { entries: posts } = await getEmDashCollection("posts", {
+	locale,
 	where: { category: term.slug },
 	orderBy: { published_at: "desc" },
 });
@@ -30,20 +31,24 @@ const filteredPosts = await Promise.all(
 );
 ---
 
-<Base title={`${term.label} posts`} description={`All posts in ${term.label}`} locale={locale}>
+<Base
+	title={`${t("archive.categoryTitle", locale)} ${term.label}`}
+	description={`${t("archive.categoryDesc", locale)} ${term.label}`}
+	locale={locale}
+>
 	<section class="archive-section">
 		<header class="archive-header">
-			<span class="archive-label">Category</span>
+			<span class="archive-label">{t("archive.category", locale)}</span>
 			<h1 class="archive-title">{term.label}</h1>
 			<p class="archive-count">
 				{filteredPosts.length}
-				{filteredPosts.length === 1 ? "post" : "posts"}
+				{locale === "ar" ? "مقالة" : (filteredPosts.length === 1 ? "post" : "posts")}
 			</p>
 		</header>
 
 		{
 			filteredPosts.length === 0 ? (
-				<p class="no-posts">No posts in this category yet.</p>
+				<p class="no-posts">{t("archive.noPostsCategory", locale)}</p>
 			) : (
 				<div class="posts-grid">
 					{filteredPosts.map(({ post, tags }) => (
@@ -55,6 +60,7 @@ const filteredPosts = await Promise.all(
 							date={post.data.publishedAt ?? undefined}
 							readingTime={getReadingTime(post.data.content)}
 							tags={tags.map((t) => ({ slug: t.slug, label: t.label }))}
+							locale={locale}
 						/>
 					))}
 				</div>
