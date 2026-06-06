@@ -1,6 +1,7 @@
 ---
 import type { MediaValue, ContentBylineCredit } from "emdash";
 import { Image } from "emdash/ui";
+import { t, type Locale, defaultLocale } from "../i18n/utils";
 
 interface Props {
 	title: string;
@@ -11,6 +12,7 @@ interface Props {
 	readingTime?: number;
 	tags?: Array<{ slug: string; label: string }>;
 	bylines?: ContentBylineCredit[];
+	locale?: Locale;
 }
 
 const {
@@ -22,10 +24,11 @@ const {
 	readingTime,
 	tags,
 	bylines,
+	locale = defaultLocale,
 } = Astro.props;
 
 const formattedDate = date
-	? date.toLocaleDateString("en-US", {
+	? date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
 			year: "numeric",
 			month: "short",
 			day: "numeric",
@@ -82,7 +85,7 @@ const formattedDate = date
 				}
 				{formattedDate && <time>{formattedDate}</time>}
 				{formattedDate && readingTime && <span class="meta-dot" />}
-				{readingTime && <span>{readingTime} min</span>}
+				{readingTime && <span>{readingTime} {t("writing.min", locale)}</span>}
 			</div>
 			<h2 class="card-title">{title}</h2>
 			{excerpt && <p class="card-excerpt">{excerpt}</p>}
@@ -92,7 +95,7 @@ const formattedDate = date
 		tags && tags.length > 0 && (
 			<div class="card-tags">
 				{tags.slice(0, 2).map((tag) => (
-					<a href={`/tag/${tag.slug}`} class="card-tag">
+					<a href={`/${locale}/tag/${tag.slug}`} class="card-tag">
 						{tag.label}
 					</a>
 				))}

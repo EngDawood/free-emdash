@@ -1,17 +1,20 @@
 ---
+import { type Locale, defaultLocale } from "../i18n/utils";
+
 interface Props {
   tags: Array<{ slug: string; label: string }>;
   class?: string;
+  locale?: Locale;
 }
 
-const { tags, class: className } = Astro.props;
+const { tags, class: className, locale = defaultLocale } = Astro.props;
 ---
 
 {tags.length > 0 && (
   <ul class:list={["tag-list", className]}>
     {tags.map((tag) => (
       <li>
-        <a href={`/tag/${tag.slug}`} class="tag">{tag.label}</a>
+        <a href={`/${locale}/tag/${tag.slug}`} class="tag">{tag.label}</a>
       </li>
     ))}
   </ul>
