@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.7",
-    "@astrojs/cloudflare": "^13.1.6",
+    "@astrojs/cloudflare": "13.1.8",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^25.9.2",
     "@types/react": "^19.2.14",
@@ -40,6 +40,9 @@
     "wrangler": "4.81.1"
   },
   "pnpm": {
+    "overrides": {
+      "@cloudflare/vite-plugin": "1.31.2"
+    },
     "patchedDependencies": {
       "emdash@0.17.2": "patches/emdash@0.17.2.patch"
     }
