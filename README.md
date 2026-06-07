@@ -1,5 +1,6 @@
 # Portfolio & Task Tracker
 
+[![SafeSkill 60/100](https://img.shields.io/badge/SafeSkill-60%2F100_Use%20with%20Caution-orange)](https://safeskill.dev/scan/engdawood-free-emdash)
 A modern, multilingual personal portfolio website and CMS built with [Astro](https://astro.build/) and [EmDash](https://github.com/emdash-cms/emdash), deployed on Cloudflare Workers. It features an integrated Model Context Protocol (MCP) server, allowing AI agents to interact directly with the CMS content.
 
 ## Features
