@@ -68,6 +68,9 @@ export default defineConfig({
 			external: ["cloudflare:workers", "cloudflare:sockets"],
 		},
 		optimizeDeps: {
+			esbuildOptions: {
+				external: ["cloudflare:workers", "cloudflare:sockets", "virtual:emdash/*"],
+			},
 			include: [
 				"emdash/middleware",
 				"emdash/middleware/redirect",
