@@ -72,7 +72,7 @@ const results = query ? allPosts.filter((p) => matchesQuery(p, query)) : [];
 							title={post.data.title}
 							excerpt={post.data.excerpt}
 							featuredImage={post.data.featured_image}
-							href={`/${locale}/posts/${post.id}`}
+							href={`/${locale}/blog/${post.id}`}
 							date={post.data.publishedAt ?? undefined}
 							readingTime={getReadingTime(post.data.content)}
 							locale={locale}

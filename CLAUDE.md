@@ -97,6 +97,7 @@ Detailed subsystem docs live in `.claude/`. Claude Code loads these on-demand vi
 | `.claude/CLAUDE.CLOUDFLARE.md` | Cloudflare / Wrangler — dual-config setup, sandbox behavior, adapter gotchas |
 | `.claude/CLAUDE-mcp.md` | MCP server — tool structure, runtime constraints, tool inventory, how to add tools |
 | `.claude/CLAUDE-tracker.md` | Task tracker — active work items and session history |
+| `.claude/rules/dep-pinning.md` | Dependency pinning — Cloudflare adapter/vite-plugin/wrangler triad, upgrade rules, failure signatures |
 
 ## EmDash CMS
 
@@ -112,8 +113,11 @@ See @CLAUDE.CLOUDFLARE.md for the dual-config setup, sandbox plugin behavior, an
 
 ## Patches
 
-Two packages are patched via `pnpm patch`:
-- `emdash@0.1.1` — `patches/emdash@0.1.1.patch`
-- `@emdash-cms/auth@0.1.1` — `patches/@emdash-cms__auth@0.1.1.patch`
+One package is patched via `pnpm patch`:
+- `emdash@0.17.2` — `patches/emdash@0.17.2.patch`
 
-After `pnpm install`, patches are applied automatically. If you update these packages, re-apply or update the patches.
+Declared in `package.json` under `pnpm.patchedDependencies`. Applied automatically after `pnpm install`. If you upgrade emdash, re-apply or update the patch against the new version.
+
+## Dependency Pinning
+
+The Cloudflare adapter stack has a peer-dependency chain that must stay in sync. See @rules/dep-pinning.md for upgrade rules and failure signatures.

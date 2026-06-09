@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ url: reqUrl }) => {
 			?.toISOString()
 			.split("T")[0];
 		return LOCALES.map((locale) =>
-			urlEntry(origin, `/${locale}/posts/${slug}`, lastmod)
+			urlEntry(origin, `/${locale}/blog/${slug}`, lastmod)
 		);
 	});
 
