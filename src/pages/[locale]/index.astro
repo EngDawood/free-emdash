@@ -205,7 +205,7 @@ if (Astro.request.method === "POST") {
 			</div>
 			{recentPosts.length > 0 && (
 				<div class="writing-grid">
-					<a href={`/${locale}/posts/${recentPosts[0].id}`} class="writing-card feature-card reveal-item" style="--delay: 0">
+					<a href={`/${locale}/blog/${recentPosts[0].id}`} class="writing-card feature-card reveal-item" style="--delay: 0">
 						<div class="writing-meta">
 							{recentPosts[0].data.publishedAt && (
 								<span class="writing-date">{recentPosts[0].data.publishedAt.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
@@ -216,7 +216,7 @@ if (Astro.request.method === "POST") {
 					</a>
 					<div class="writing-side">
 						{recentPosts.slice(1).map((post, i) => (
-							<a href={`/${locale}/posts/${post.id}`} class="writing-card side-card reveal-item" style={`--delay: ${i + 1}`}>
+							<a href={`/${locale}/blog/${post.id}`} class="writing-card side-card reveal-item" style={`--delay: ${i + 1}`}>
 								<div class="writing-meta">
 									{post.data.publishedAt && (
 										<span class="writing-date">{post.data.publishedAt.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", year: "numeric" })}</span>
@@ -229,7 +229,7 @@ if (Astro.request.method === "POST") {
 					</div>
 				</div>
 			)}
-			<a href={`/${locale}/posts`} class="view-all reveal-child">{t("writing.viewAll", locale)} →</a>
+				<a href={`/${locale}/blog`} class="view-all reveal-child">{t("writing.viewAll", locale)} →</a>
 		</div>
 	</section>
 

@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ site, url }) => {
 	const items = posts
 		.map((p) => {
 			if (!p.data.publishedAt) return null;
-			const entryUrl = `${siteUrl}/posts/${p.data.slug || p.id}`;
+			const entryUrl = `${siteUrl}/blog/${p.data.slug || p.id}`;
 			return `    <item>
       <title>${escapeXml(p.data.title || "Untitled")}</title>
       <link>${entryUrl}</link>
@@ -31,7 +31,7 @@ export const GET: APIRoute = async ({ site, url }) => {
   <channel>
     <title>${escapeXml(siteTitle)} — Writing</title>
     <description>Latest posts from ${escapeXml(siteTitle)}</description>
-    <link>${siteUrl}/posts</link>
+    <link>${siteUrl}/blog</link>
     <atom:link href="${siteUrl}/rss/posts.xml" rel="self" type="application/rss+xml"/>
     <language>en-us</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
