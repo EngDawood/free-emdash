@@ -1,0 +1,213 @@
+---
+export const prerender = false;
+
+import Base from "../../layouts/Base.astro";
+import { t, locales, type Locale, defaultLocale } from "../../i18n/utils";
+
+const { locale: localeParam } = Astro.params;
+const locale: Locale = locales.includes(localeParam as Locale)
+	? (localeParam as Locale)
+	: defaultLocale;
+
+if (!locales.includes(localeParam as Locale)) {
+	return Astro.redirect(`/${defaultLocale}/signup`, 302);
+}
+
+type FormStatus = "idle" | "success" | "error";
+let formStatus: FormStatus = "idle";
+let formMessage = "";
+
+if (Astro.request.method === "POST") {
+	const formData = await Astro.request.formData();
+	const email = formData.get("email")?.toString().trim() ?? "";
+
+	if (!email || !email.includes("@") || !email.includes(".")) {
+		formStatus = "error";
+		formMessage = t("signup.invalidEmail", locale);
+	} else {
+		const env = (Astro.locals as unknown as { runtime: { env: Record<string, string> } }).runtime.env;
+		const token = env.EMDASH_TOKEN;
+
+		if (!token) {
+			formStatus = "error";
+			formMessage = t("signup.error", locale);
+		} else {
+			try {
+				const res = await fetch(new URL("/_emdash/api/auth/invite", Astro.url), {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}`,
+					},
+					body: JSON.stringify({ email, role: 20 }),
+				});
+
+				if (res.ok) {
+					formStatus = "success";
+					formMessage = t("signup.success", locale);
+				} else {
+					const data = await res.json().catch(() => ({})) as { message?: string };
+					formStatus = "error";
+					formMessage = data.message || t("signup.error", locale);
+				}
+			} catch {
+				formStatus = "error";
+				formMessage = t("signup.error", locale);
+			}
+		}
+	}
+}
+---
+
+<Base
+	title={t("signup.title", locale)}
+	description={t("signup.description", locale)}
+	locale={locale}
+>
+	<section class="signup-page">
+		<div class="signup-inner">
+			<div class="signup-header">
+				<span class="kicker">§ signup</span>
+				<h1 class="signup-heading">{t("signup.heading", locale)}</h1>
+				<p class="signup-sub">{t("signup.subheading", locale)}</p>
+			</div>
+
+			{formStatus === "success" ? (
+				<div class="form-success">
+					<p>{formMessage}</p>
+					<a href={`/${locale}/`} class="btn btn-ghost">{t("nav.home", locale)}</a>
+				</div>
+			) : (
+				<form method="POST" class="signup-form">
+					{formStatus === "error" && (
+						<div class="form-error">{formMessage}</div>
+					)}
+					<div class="form-field">
+						<label for="email">{t("signup.email", locale)}</label>
+						<input
+							type="email"
+							id="email"
+							name="email"
+							required
+							autocomplete="email"
+							autofocus
+						/>
+					</div>
+					<button type="submit" class="btn btn-primary">
+						{t("signup.submit", locale)}
+					</button>
+					<p class="login-prompt">
+						{t("signup.loginPrompt", locale)}{" "}
+						<a href="/_emdash/admin">{t("signup.login", locale)}</a>
+					</p>
+				</form>
+			)}
+		</div>
+	</section>
+</Base>
+
+<style>
+	.signup-page {
+		min-height: 60vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--spacing-16) var(--spacing-6);
+	}
+
+	.signup-inner {
+		width: 100%;
+		max-width: 440px;
+	}
+
+	.signup-header {
+		margin-bottom: var(--spacing-8);
+	}
+
+	.kicker {
+		display: block;
+		font-family: var(--font-mono);
+		font-size: var(--font-size-xs);
+		color: var(--color-accent);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		margin-bottom: var(--spacing-3);
+	}
+
+	.signup-heading {
+		font-family: var(--font-serif);
+		font-size: var(--font-size-2xl);
+		font-weight: 500;
+		margin-bottom: var(--spacing-2);
+	}
+
+	.signup-sub {
+		color: var(--color-muted);
+		font-size: var(--font-size-sm);
+	}
+
+	.signup-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-4);
+	}
+
+	.form-field {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+	}
+
+	.form-field label {
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
+	}
+
+	.form-field input {
+		padding: var(--spacing-2) var(--spacing-3);
+		font-size: var(--font-size-base);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		background: var(--color-bg);
+		color: var(--color-text);
+		width: 100%;
+	}
+
+	.form-field input:focus {
+		outline: none;
+		border-color: var(--color-accent);
+	}
+
+	.form-error {
+		color: #ef4444;
+		font-size: var(--font-size-sm);
+		padding: var(--spacing-2) var(--spacing-3);
+		border: 1px solid #ef4444;
+		border-radius: var(--radius);
+		background: color-mix(in srgb, #ef4444 5%, transparent);
+	}
+
+	.form-success {
+		padding: var(--spacing-8);
+		background: var(--color-surface);
+		border-radius: var(--radius);
+		text-align: center;
+	}
+
+	.form-success p {
+		color: #22c55e;
+		font-family: var(--font-serif);
+		margin-bottom: var(--spacing-4);
+	}
+
+	.login-prompt {
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
+		text-align: center;
+	}
+
+	.login-prompt a {
+		color: var(--color-accent);
+		text-decoration: underline;
+	}
+</style>
