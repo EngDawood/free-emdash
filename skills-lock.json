@@ -1,4 +1,10 @@
 {
   "version": 1,
-  "skills": {}
+  "skills": {
+    "emdash-github-actions": {
+      "source": "jdevalk/skills",
+      "sourceType": "github",
+      "computedHash": "c30421e6953cfc2d61b703450064293e685c8c6d19ecdd477d5f3908405a3a7f"
+    }
+  }
 }
