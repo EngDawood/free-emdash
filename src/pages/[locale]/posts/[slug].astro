@@ -1,0 +1,5 @@
+---
+// Redirect /[locale]/posts/[slug] → /[locale]/blog/[slug]
+const { locale, slug } = Astro.params;
+return Astro.redirect(`/${locale}/blog/${slug}`, 301);
+---
