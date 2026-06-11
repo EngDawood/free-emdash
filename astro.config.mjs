@@ -8,7 +8,7 @@ import emdash from "emdash/astro";
 import { fileURLToPath } from "node:url";
 
 const emailWorkerEntrypoint = fileURLToPath(
-	new URL("./src/plugins/email-worker.ts", import.meta.url),
+	new URL("./src/plugins/email-cf-worker.ts", import.meta.url),
 ).replaceAll("\\", "/");
 
 const trackerLinkEntrypoint = fileURLToPath(
@@ -41,7 +41,7 @@ export default defineConfig({
 			plugins: [
 				formsPlugin(),
 				{
-					id: "email-resend-provider",
+					id: "email-cf-provider",
 					version: "0.1.0",
 					format: "native",
 					entrypoint: emailWorkerEntrypoint,

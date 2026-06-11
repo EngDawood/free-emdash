@@ -72,5 +72,13 @@
 	},
 	"services": [
 		{ "binding": "SELF", "service": "dawood-emdash" }
+	],
+	"send_email": [
+		{ "name": "SEND_EMAIL" }
+	],
+	"worker_loaders": [
+		{
+			"binding": "LOADER",
+		},
 	]
 }

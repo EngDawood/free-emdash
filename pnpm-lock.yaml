@@ -43,6 +43,9 @@ importers:
       emdash:
         specifier: 0.17.2
         version: 0.17.2(patch_hash=f32a112e8832d66754b1e13024428600cc63757b1afc113bfd19066761cb19e6)(5db2cf29734ce7a7c94c7bc3722fdcf7)
+      mimetext:
+        specifier: ^3.0.28
+        version: 3.0.28
       react:
         specifier: ^19.2.4
         version: 19.2.5
